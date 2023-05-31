@@ -4,17 +4,17 @@
 #include "matrix.h"
 
 
-mat zero(uint width, uint height){
+mat newMat(u32 width, u32 height){
     mat res = malloc(sizeof(mat_t));
     res->data = malloc(sizeof(f32*)*width);
-    for(uint i = 0; i < width;i++)res->data[i] = calloc(height,sizeof(f32));
+    for(u32 i = 0; i < width;i++)res->data[i] = calloc(height,sizeof(f32));
     res->w = width;
     res->h = height;
     return res;
 }
 
 void destroyMat(mat matrix){
-    for(uint i = 0; i < matrix->w;i++)free(matrix->data[i]);
+    for(u32 i = 0; i < matrix->w;i++)free(matrix->data[i]);
     free(matrix->data);
     free(matrix);
 }
@@ -34,17 +34,17 @@ void destroyMat(mat matrix){
 */
 void displayMat(mat matrix){
     printf("+-");
-    for(uint x = 0; x < matrix->w;x++)printf("      ");
+    for(u32 x = 0; x < matrix->w;x++)printf("      ");
     printf("-+\n");
-    for(uint y = 0; y < matrix->h;y++){
+    for(u32 y = 0; y < matrix->h;y++){
         printf("| ");
-        for(uint x = 0; x < matrix->w;x++){
+        for(u32 x = 0; x < matrix->w;x++){
             printf("%.3f ",matrix->data[x][y]);
         }
         printf(" |\n");
     }
     printf("+-");
-    for(uint x = 0; x < matrix->w;x++)printf("      ");
+    for(u32 x = 0; x < matrix->w;x++)printf("      ");
     printf("-+\n");
 
 }
@@ -64,11 +64,11 @@ void setcol(uc r,uc g,uc b){
 void displayMatCol(mat matrix){
     resetcol();
     printf("+-");
-    for(uint x = 0; x < matrix->w;x++)printf("  ");
+    for(u32 x = 0; x < matrix->w;x++)printf("  ");
     printf("-+\n");
-    for(uint y = 0; y < matrix->h;y++){
+    for(u32 y = 0; y < matrix->h;y++){
         printf("| ");
-        for(uint x = 0; x < matrix->w;x++){
+        for(u32 x = 0; x < matrix->w;x++){
             uc col = 255*matrix->data[x][y];
             setcol(col,col,col);
             printf("  ");
@@ -77,7 +77,63 @@ void displayMatCol(mat matrix){
         printf(" |\n");
     }
     printf("+-");
-    for(uint x = 0; x < matrix->w;x++)printf("  ");
+    for(u32 x = 0; x < matrix->w;x++)printf("  ");
     printf("-+\n");
 
+}
+
+
+vec newVec(u32 height){
+    vec res = malloc(sizeof(vec_t));
+    res->data = calloc(height,sizeof(f32));
+    res->h = height;
+    return res;
+}
+void destroyVec(vec vector){
+    free(vector->data);
+    free(vector);
+}
+void displayVec(vec vector){
+    printf("+-");
+    printf("     ");
+    printf("-+\n");
+    for(u32 y = 0; y < vector->h;y++){
+        printf("| ");
+        printf("%.3f",vector->data[y]);
+        printf(" |\n");
+    }
+    printf("+-");
+    printf("     ");
+    printf("-+\n");
+}
+
+void displayVecCol(vec vector){
+    printf("+-");
+    printf("  ");
+    printf("-+\n");
+    for(u32 y = 0; y < vector->h;y++){
+        printf("| ");
+        uc col = 255*vector->data[y];
+        setcol(col,col,col);
+        printf("  ");
+        resetcol();
+        printf(" |\n");
+    }
+    printf("+-");
+    printf("  ");
+    printf("-+\n");
+}
+
+vec layertovec(layer l){
+    vec res = newVec(l.nc);
+    for(u32 i = 0; i < l.nc;i++)res->data[i] = l.n[i].a;
+    return res;
+}
+
+//must do matrix-vector operations
+
+void forallVecElements(vec vector , f32 (*fun)(f32)){
+    for(u32 i = 0; i < vector->h; i++){
+        vector->data[i] = fun(vector->data[i]);
+    }
 }

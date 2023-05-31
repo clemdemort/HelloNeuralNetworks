@@ -2,13 +2,16 @@
 #define MODEL_H
 
 typedef unsigned int u32;
+typedef float f32;
 typedef struct neuron_s{
 	//weight count
 	u32 wc;		
 	//weight list
-	float *w;	
+	f32 *w;	
 	//bias
-	float b;	
+	f32 b;
+    //activation
+    f32 a;
 }neuron_t;
 
 typedef struct layer_s{
@@ -23,7 +26,9 @@ typedef struct model_s{
 	u32 lc;			
 	//layer list
 	layer * l;	
-}model;
+}model_t;
+
+typedef model_t * model;
 
 typedef struct descriptor_s{
 	u32 * desc;
@@ -35,5 +40,7 @@ layer newlayer(u32 wc,u32 nc);
 void destroyLayer(layer l);
 model newModel(descriptor arch);
 void destroyModel(model m);
+//compute : a function that takes in a model and modifies it's output layer
+//layer compute(model m);
 
 #endif

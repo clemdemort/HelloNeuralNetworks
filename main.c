@@ -6,10 +6,7 @@
 #include "src/matrix.h"
 #include "src/model.h"
 
-
-typedef unsigned int u32 ;
-
-typedef float cpl[3];
+typedef f32 cpl[3];
 cpl data[] = {
 	{0,0,0},
 	{0,1,1},
@@ -19,43 +16,43 @@ cpl data[] = {
 #define data_count (sizeof(data)/sizeof(data[0]))
 
 
-float sig(float x){
+f32 sig(f32 x){
 	return 1.f/(1.f + expf(-x));	
 }
 
 
-float randfloat(){
-	return (float)rand()/(float)RAND_MAX;
+f32 randf32(){
+	return (f32)rand()/(f32)RAND_MAX;
 }
 /*
-float cost(neuron n){
-	float res = 0.0f;
+f32 cost(neuron n){
+	f32 res = 0.0f;
 	for(size_t i = 0; i < data_count; i++){
-		float y = 0;
+		f32 y = 0;
 		for(u32 j = 0; j < n->wc;j++){
-			float x = data[i][j];
+			f32 x = data[i][j];
 			y += x * n->w[j];
 		}
 		y = sig(y + n->b);
-		float d = y - data[i][2];
+		f32 d = y - data[i][2];
 		res += d*d;
 
 	}
 	res /= data_count;
 	return res;
 }
-void train(neuron n,float eps, float rate){
-	float * dw = malloc(n->wc*sizeof(float));
-	float c = cost(n);
+void train(neuron n,f32 eps, f32 rate){
+	f32 * dw = malloc(n->wc*sizeof(f32));
+	f32 c = cost(n);
 	for(u32 j = 0; j < n->wc;j++){
-		float save = n->w[j];
+		f32 save = n->w[j];
 		n->w[j] += eps;
 		dw[j] = rate * ((cost(n)-c)/eps);
 		n->w[j] = save;
 	}
-	float save  = n->b;
+	f32 save  = n->b;
 	n->b += eps;
-	float db = rate * ((cost(n)-c)/eps);
+	f32 db = rate * ((cost(n)-c)/eps);
 	n->b = save;
 	n->b -= db;
 	for(u32 j = 0; j < n->wc;j++){
@@ -70,13 +67,13 @@ int main(){
 	srand(time(0));
 	neuron n = newNeuron(2);
 	//printf("w1 : %f, w2 : %f, B : %f , cost : %f\n",w1,w2,b,c);
-	float eps = 1e-1;
-	float rate = 1e-1;
+	f32 eps = 1e-1;
+	f32 rate = 1e-1;
 
 	for(size_t i = 0; i < data_count; i++){
-		float x1 = data[i][0];
-		float x2 = data[i][1];
-		float y = sig((x1*n->w[0]) + (x2*n->w[1]) + n->b);
+		f32 x1 = data[i][0];
+		f32 x2 = data[i][1];
+		f32 y = sig((x1*n->w[0]) + (x2*n->w[1]) + n->b);
 		printf("actual : %f \texpected : %f\n",y,data[i][2]);
 
 	}
@@ -89,9 +86,9 @@ int main(){
 	}
 	
 	for(size_t i = 0; i < data_count; i++){
-		float x1 = data[i][0];
-		float x2 = data[i][1];
-		float y = sig((x1*n->w[0]) + (x2*n->w[1]) + n->b);
+		f32 x1 = data[i][0];
+		f32 x2 = data[i][1];
+		f32 y = sig((x1*n->w[0]) + (x2*n->w[1]) + n->b);
 		printf("actual : %f \texpected : %f\n",y,data[i][2]);
 
 	}
@@ -103,6 +100,16 @@ int main(){
 	arch.desc[1] = 2;
 	arch.desc[2] = 1;
 	model nn = newModel(arch);
+	//manually training the model for fun (will do when compute function is done) 
+	nn->l[0].n[0].a = 4.0f;
+
+
+
+	vec test = layertovec(nn->l[0]);
+	displayVec(test);
+	forallVecElements(test,sig);
+	displayVec(test);
+	destroyVec(test);
 	destroyModel(nn);
 	free(arch.desc);
   	return EXIT_SUCCESS;
