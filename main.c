@@ -4,80 +4,10 @@
 #include <time.h>
 #include <math.h>
 #include "src/matrix.h"
+#include "src/model.h"
 
 
-typedef unsigned int u32;
-typedef struct neuron_s{
-	//weight count
-	u32 wc;		
-	//weight list
-	float *w;	
-	//bias
-	float b;	
-}neuron_t;
-
-typedef struct layer_s{
-	//neuron count	
-	u32 nc;			
-	//neuron list
-	neuron_t * n;	
-}layer;
-
-typedef struct model_s{
-	//layer count	
-	u32 lc;			
-	//layer list
-	layer * l;	
-}model;
-
-typedef struct descriptor_s{
-	u32 * desc;
-	u32 descsize;
-}descriptor;
-
-//wc : weight count -> how many weights should each neuron have (e.g how many neurons/entries before)
-//nc : neuron count -> how many neurons in the layer
-layer newlayer(u32 wc,u32 nc){
-	layer res;
-	res.nc = nc;
-	res.n = malloc(sizeof(neuron_t)* nc);
-	for(u32 i = 0; i < nc; i++ ){
-		res.n[i].wc = wc;
-		res.n[i].w = calloc(sizeof(float) , wc);
-		res.n[i].b = 0;
-	}
-	return res;
-}
-
-void destroyLayer(layer l){
-	for(u32 i = 0; i < l.nc; i++ ){
-		free(l.n[i].w);
-	}
-	free(l.n);
-}
-
-
-model newModel(descriptor arch){
-	model res;
-	res.lc = arch.descsize;
-	res.l = malloc(sizeof(layer)*res.lc);
-	for(u32 i = 0; i < res.lc;i++){
-		//i=0 will be the entry layer and i = res.lc-1 will be the exit layer
-		//the rest (in between) will be hidden layers
-		u32 prevnc = 0;
-		if(i > 0)prevnc = arch.desc[i-1];
-		res.l[i] = newlayer(prevnc, arch.desc[i]);
-
-	}
-	return res;
-}
-
-void destroyModel(model m){
-	for(u32 i = 0; i < m.lc; i++){
-		destroyLayer(m.l[i]);
-	}
-	free(m.l);
-}
+typedef unsigned int u32 ;
 
 typedef float cpl[3];
 cpl data[] = {
