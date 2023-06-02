@@ -4,10 +4,10 @@ Summer project of 2023, a first step into the world of AI, all in C of course ;)
 I hope to be able to show this off to my peers by the end of the summer.
 
 # 📜 Objectives :
-* create a matrix operations header
+* create a matrix operations header ✅
 * create some sort of csv loader
 * create a text user interface to visualize data
-* create a neural network
+* create a neural network ✅
 * create a system to train the network
 * train the neural network on data to recognize drawn numbers
 * create an interface to interact with the neural network
