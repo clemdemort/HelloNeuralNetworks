@@ -1,6 +1,18 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "model.h"
+#include "matrix.h"
+
+f32 sig(f32 x){
+	return 1.f/(1.f + expf(-x));	
+}
+
+
+f32 randf32(){
+	return (f32)rand()/(f32)RAND_MAX;
+}
+
+
 
 //wc : weight count -> how many weights should each neuron have (e.g how many neurons/entries before)
 //nc : neuron count -> how many neurons in the layer
@@ -46,4 +58,29 @@ void destroyModel(model m){
 	}
 	free(m->l);
     free(m);
+}
+
+void compute(model m){
+	for(u32 i = 1;i < m->lc;i++){
+		mat m1 = weightstomat(m->l[i]);
+		vec va = layertovec(m->l[i-1]);
+		vec vb = biastovec(m->l[i]);
+
+		//we do the math
+		vec v1 = MatrixVectorProduct(m1, va);
+		vec v2 = Vadd(v1,vb);
+		forallVecElements(v2,sig);
+
+		//we enter the results in the network;
+		for(u32 j = 0; j < v2->h;j++){
+			m->l[i].n[j].a = v2->data[j];
+		}	
+
+		//free the memory!!!
+		destroyVec(va);
+		destroyVec(vb);
+		destroyVec(v1);
+		destroyVec(v2);
+		destroyMat(m1);
+	}
 }

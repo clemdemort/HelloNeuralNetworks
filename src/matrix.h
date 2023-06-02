@@ -1,6 +1,6 @@
 #ifndef MATRIX_H
 #define MATRIX_H
-
+#include <math.h>
 #include "model.h"
 
 
@@ -25,6 +25,7 @@ mat newMat(u32 width, u32 height);
 void destroyMat(mat matrix);
 void displayMat(mat matrix);
 void displayMatCol(mat matrix);
+mat weightstomat(layer l);  //take the L
 
 //allocates memory
 vec newVec(u32 height);
@@ -32,6 +33,7 @@ void destroyVec(vec vector);
 void displayVec(vec vector);
 void displayVecCol(vec vector);
 vec layertovec(layer l);
+vec biastovec(layer l);
 void forallVecElements(vec vector , f32 (*fun)(f32));
 
 //math

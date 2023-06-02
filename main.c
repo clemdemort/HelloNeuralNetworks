@@ -16,14 +16,6 @@ cpl data[] = {
 #define data_count (sizeof(data)/sizeof(data[0]))
 
 
-f32 sig(f32 x){
-	return 1.f/(1.f + expf(-x));	
-}
-
-
-f32 randf32(){
-	return (f32)rand()/(f32)RAND_MAX;
-}
 /*
 f32 cost(neuron n){
 	f32 res = 0.0f;
@@ -96,46 +88,45 @@ int main(){
 	descriptor arch;
 	arch.descsize = 3;
 	arch.desc = malloc(sizeof(u32)*arch.descsize);
-	arch.desc[0] = 2;
-	arch.desc[1] = 2;
-	arch.desc[2] = 1;
+	arch.desc[0] = 2;	//entry layer
+	arch.desc[1] = 2;	//hiden layer(s)
+	arch.desc[2] = 1;	//exit  layer
 	model nn = newModel(arch);
 	//manually training the model for fun (will do when compute function is done) 
-	nn->l[0].n[0].a = 4.0f;
+				//XOR gate
+	//or
+	nn->l[1].n[0].w[0] = 10.0f;	
+	nn->l[1].n[0].w[1] = 10.0f;	
+	nn->l[1].n[0].b	   = -5.0f;	
+	
+	//nand
+	nn->l[1].n[1].w[0] = -10.f;
+	nn->l[1].n[1].w[1] = -10.f;
+	nn->l[1].n[1].b	   = 15.0f;	
+	
+	//and
+	nn->l[2].n[0].w[0] = 10.f;
+	nn->l[2].n[0].w[1] = 10.f;
+	nn->l[2].n[0].b	   = -15.0f;	
 
 
+	//input:
+	//change these if you want to see if it works
 
-	vec test = layertovec(nn->l[0]);
-	displayVec(test);
-	forallVecElements(test,sig);
-	displayVec(test);
-	destroyVec(test);
+	nn->l[0].n[0].a = 0.0f;	
+	nn->l[0].n[1].a = 1.0f;	
+
+	compute(nn);	//magic!
+	vec res = layertovec(nn->l[(nn->lc)-1]);
+	vec in = layertovec(nn->l[0]);
+	printf("input : \n");
+	displayVec(in);
+	printf("result : \n");
+	displayVec(res);
+	destroyVec(in);
+	destroyVec(res);
+
 	destroyModel(nn);
 	free(arch.desc);
-	
-	printf("we do based math now: \n");
-	vec v1 = newVec(3);
-	mat m1 = newMat(3, 3);
-	m1->data[0][0] = 2.0f;
-	m1->data[1][1] = 2.0f;
-	m1->data[2][2] = 2.0f;
-
-	v1->data[0] = 1.0f;
-	v1->data[1] = 2.0f;
-	v1->data[2] = 3.0f;
-
-	vec v2 = MatrixVectorProduct(m1, v1);
-
-	displayVec(v1);
-	displayMat(m1);
-	if(v2 != NULL){
-		displayVec(v2);
-		vec v3 = Vadd(v1, v2);
-		if(v3 != NULL)displayVec(v3);
-		destroyVec(v3);
-	}
-	destroyVec(v1);
-	destroyVec(v2);
-	destroyMat(m1);
   	return EXIT_SUCCESS;
 }

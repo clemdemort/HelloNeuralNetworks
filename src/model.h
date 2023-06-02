@@ -41,6 +41,8 @@ void destroyLayer(layer l);
 model newModel(descriptor arch);
 void destroyModel(model m);
 //compute : a function that takes in a model and modifies it's output layer
-//layer compute(model m);
+void compute(model m);
+f32 sig(f32 x);
+
 
 #endif

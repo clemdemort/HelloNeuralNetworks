@@ -129,6 +129,11 @@ vec layertovec(layer l){
     for(u32 i = 0; i < l.nc;i++)res->data[i] = l.n[i].a;
     return res;
 }
+vec biastovec(layer l){
+    vec res = newVec(l.nc);
+    for(u32 i = 0; i < l.nc;i++)res->data[i] = l.n[i].b;
+    return res;
+}
 
 void forallVecElements(vec vector , f32 (*fun)(f32)){
     for(u32 i = 0; i < vector->h; i++){
@@ -138,10 +143,10 @@ void forallVecElements(vec vector , f32 (*fun)(f32)){
 
 vec MatrixVectorProduct(mat m, vec v){
     if(m->w == v->h){
-        vec res = newVec(v->h);
+        vec res = newVec(m->h);
         for(u32 x = 0;x < m->h;x++){
             for(u32 y = 0; y < v->h;y++){
-                res->data[x] += m->data[x][y] * v->data[y];
+                res->data[x] += m->data[y][x] * v->data[y];
             }
         }
         return res;
@@ -162,5 +167,17 @@ vec Vadd(vec v1,vec v2){
         fprintf(stderr,"[ERROR] vector 1 length is not equal to vector 2 length, operation is impossible!\n");
     }
     return NULL;
+}
+
+mat weightstomat(layer l){
+    u32 h = l.nc;
+    u32 w = l.n[0].wc;
+    mat res = newMat(w, h);
+    for(u32 y = 0; y < h;y++){
+        for(u32 x = 0; x < w;x++){
+            res->data[x][y] = l.n[y].w[x];
+        }
+    }
+    return res;
 }
 
