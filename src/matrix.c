@@ -130,10 +130,37 @@ vec layertovec(layer l){
     return res;
 }
 
-//must do matrix-vector operations
-
 void forallVecElements(vec vector , f32 (*fun)(f32)){
     for(u32 i = 0; i < vector->h; i++){
         vector->data[i] = fun(vector->data[i]);
     }
 }
+
+vec MatrixVectorProduct(mat m, vec v){
+    if(m->w == v->h){
+        vec res = newVec(v->h);
+        for(u32 x = 0;x < m->h;x++){
+            for(u32 y = 0; y < v->h;y++){
+                res->data[x] += m->data[x][y] * v->data[y];
+            }
+        }
+        return res;
+    }else{
+        fprintf(stderr,"[ERROR] matrix width is not equal to vector length, operation is impossible!\n");
+    }
+    return NULL;
+}
+//allocates memory
+vec Vadd(vec v1,vec v2){
+    if(v1->h == v2->h){//the operation could technicaly be done but since it shouldn't happen it'll be an error here
+        vec res = newVec(v1->h);
+        for(u32 i = 0; i < v1->h;i++){
+            res->data[i] = v1->data[i] + v2->data[i];
+        }
+        return res;
+    }else{
+        fprintf(stderr,"[ERROR] vector 1 length is not equal to vector 2 length, operation is impossible!\n");
+    }
+    return NULL;
+}
+

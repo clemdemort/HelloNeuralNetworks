@@ -112,5 +112,30 @@ int main(){
 	destroyVec(test);
 	destroyModel(nn);
 	free(arch.desc);
+	
+	printf("we do based math now: \n");
+	vec v1 = newVec(3);
+	mat m1 = newMat(3, 3);
+	m1->data[0][0] = 2.0f;
+	m1->data[1][1] = 2.0f;
+	m1->data[2][2] = 2.0f;
+
+	v1->data[0] = 1.0f;
+	v1->data[1] = 2.0f;
+	v1->data[2] = 3.0f;
+
+	vec v2 = MatrixVectorProduct(m1, v1);
+
+	displayVec(v1);
+	displayMat(m1);
+	if(v2 != NULL){
+		displayVec(v2);
+		vec v3 = Vadd(v1, v2);
+		if(v3 != NULL)displayVec(v3);
+		destroyVec(v3);
+	}
+	destroyVec(v1);
+	destroyVec(v2);
+	destroyMat(m1);
   	return EXIT_SUCCESS;
 }
