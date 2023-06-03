@@ -1,10 +1,19 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include "model.h"
 #include "matrix.h"
+#include "model.h"
 
 f32 sig(f32 x){
 	return 1.f/(1.f + expf(-x));	
+}
+
+f32 max(f32 a,f32 b){
+	if(a > b)return a;
+	return b;
+}
+
+f32 reLU(f32 x){
+	return max(0,x);	
 }
 
 
@@ -18,36 +27,25 @@ f32 randf32(){
 //nc : neuron count -> how many neurons in the layer
 layer newlayer(u32 wc,u32 nc){
 	layer res;
-	res.nc = nc;
-	res.n = malloc(sizeof(neuron_t)* nc);
-	for(u32 i = 0; i < nc; i++ ){
-		res.n[i].wc = wc;
-		res.n[i].w = calloc(sizeof(f32) , wc);
-		res.n[i].b = 0;
-		res.n[i].a = 0;
-	}
+
+	res.weights = newMat(wc, nc);
+	res.biases = newVec(nc);
 	return res;
 }
 
 void destroyLayer(layer l){
-	for(u32 i = 0; i < l.nc; i++ ){
-		free(l.n[i].w);
-	}
-	free(l.n);
+	destroyVec(l.biases);
+	destroyMat(l.weights);
 }
 
 
 model newModel(descriptor arch){
 	model res = malloc(sizeof(model_t));
-	res->lc = arch.descsize;
+	res->lc = arch.descsize -1;	//we dont store the input layer
 	res->l = malloc(sizeof(layer)*res->lc);
 	for(u32 i = 0; i < res->lc;i++){
-		//i=0 will be the entry layer and i = res.lc-1 will be the exit layer
-		//the rest (in between) will be hidden layers
-		u32 prevnc = 0;
-		if(i > 0)prevnc = arch.desc[i-1];
-		res->l[i] = newlayer(prevnc, arch.desc[i]);
-
+		//i = 0 means the first hidden layer
+		res->l[i] = newlayer(arch.desc[i], arch.desc[i+1]);
 	}
 	return res;
 }
@@ -60,27 +58,24 @@ void destroyModel(model m){
     free(m);
 }
 
-void compute(model m){
-	for(u32 i = 1;i < m->lc;i++){
-		mat m1 = weightstomat(m->l[i]);
-		vec va = layertovec(m->l[i-1]);
-		vec vb = biastovec(m->l[i]);
+vec compute(model m,vec vinput){
+	vec vprev = vcpy(vinput);
+	for(u32 i = 0;i < m->lc;i++){
+		mat m1 = m->l[i].weights;
+		vec va = vprev;
+		vec vb = m->l[i].biases;
 
 		//we do the math
 		vec v1 = MatrixVectorProduct(m1, va);
 		vec v2 = Vadd(v1,vb);
 		forallVecElements(v2,sig);
 
-		//we enter the results in the network;
-		for(u32 j = 0; j < v2->h;j++){
-			m->l[i].n[j].a = v2->data[j];
-		}	
+		//we save the results in a vector
+		vprev = v2;
 
 		//free the memory!!!
 		destroyVec(va);
-		destroyVec(vb);
 		destroyVec(v1);
-		destroyVec(v2);
-		destroyMat(m1);
 	}
+	return vprev;
 }

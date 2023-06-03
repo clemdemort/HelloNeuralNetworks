@@ -92,40 +92,40 @@ int main(){
 	arch.desc[1] = 2;	//hiden layer(s)
 	arch.desc[2] = 1;	//exit  layer
 	model nn = newModel(arch);
-	//manually training the model for fun (will do when compute function is done) 
+	//manually training the model for fun
 				//XOR gate
 	//or
-	nn->l[1].n[0].w[0] = 10.0f;	
-	nn->l[1].n[0].w[1] = 10.0f;	
-	nn->l[1].n[0].b	   = -5.0f;	
+	nn->l[0].weights->data[0][0] = 10.0f;	
+	nn->l[0].weights->data[1][0] = 10.0f;	
+	nn->l[0].biases->data[0]	 = -5.0f;	
 	
 	//nand
-	nn->l[1].n[1].w[0] = -10.f;
-	nn->l[1].n[1].w[1] = -10.f;
-	nn->l[1].n[1].b	   = 15.0f;	
+	nn->l[0].weights->data[0][1] = -10.0f;	
+	nn->l[0].weights->data[1][1] = -10.0f;	
+	nn->l[0].biases->data[1]	 =  15.0f;	
 	
 	//and
-	nn->l[2].n[0].w[0] = 10.f;
-	nn->l[2].n[0].w[1] = 10.f;
-	nn->l[2].n[0].b	   = -15.0f;	
+	nn->l[1].weights->data[0][0] =  10.0f;	
+	nn->l[1].weights->data[1][0] =  10.0f;	
+	nn->l[1].biases->data[0]	 = -15.0f;		
 
 
 	//input:
 	//change these if you want to see if it works
 
-	nn->l[0].n[0].a = 0.0f;	
-	nn->l[0].n[1].a = 1.0f;	
+	vec in = newVec(2);
+	in->data[0] = 1.0f;
+	in->data[1] = 0.0f;
 
-	compute(nn);	//magic!
-	vec res = layertovec(nn->l[(nn->lc)-1]);
-	vec in = layertovec(nn->l[0]);
+	vec res = compute(nn,in);	//magic!
 	printf("input : \n");
 	displayVec(in);
 	printf("result : \n");
 	displayVec(res);
+
+
 	destroyVec(in);
 	destroyVec(res);
-
 	destroyModel(nn);
 	free(arch.desc);
   	return EXIT_SUCCESS;

@@ -1,24 +1,12 @@
 #ifndef MODEL_H
 #define MODEL_H
-
+#include "matrix.h"
 typedef unsigned int u32;
 typedef float f32;
-typedef struct neuron_s{
-	//weight count
-	u32 wc;		
-	//weight list
-	f32 *w;	
-	//bias
-	f32 b;
-    //activation
-    f32 a;
-}neuron_t;
 
 typedef struct layer_s{
-	//neuron count	
-	u32 nc;			
-	//neuron list
-	neuron_t * n;	
+	mat weights;
+	vec biases;
 }layer;
 
 typedef struct model_s{
@@ -41,8 +29,9 @@ void destroyLayer(layer l);
 model newModel(descriptor arch);
 void destroyModel(model m);
 //compute : a function that takes in a model and modifies it's output layer
-void compute(model m);
+vec compute(model m,vec vinput);
 f32 sig(f32 x);
+f32 reLU(f32 x);
 
 
 #endif

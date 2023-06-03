@@ -89,6 +89,13 @@ vec newVec(u32 height){
     res->h = height;
     return res;
 }
+vec vcpy(vec src){
+    vec dest = newVec(src->h);
+    for(u32 i = 0; i < src->h;i++){
+        dest->data[i] = src->data[i];
+    }
+    return dest;
+}
 void destroyVec(vec vector){
     free(vector->data);
     free(vector);
@@ -124,17 +131,6 @@ void displayVecCol(vec vector){
     printf("-+\n");
 }
 
-vec layertovec(layer l){
-    vec res = newVec(l.nc);
-    for(u32 i = 0; i < l.nc;i++)res->data[i] = l.n[i].a;
-    return res;
-}
-vec biastovec(layer l){
-    vec res = newVec(l.nc);
-    for(u32 i = 0; i < l.nc;i++)res->data[i] = l.n[i].b;
-    return res;
-}
-
 void forallVecElements(vec vector , f32 (*fun)(f32)){
     for(u32 i = 0; i < vector->h; i++){
         vector->data[i] = fun(vector->data[i]);
@@ -168,16 +164,3 @@ vec Vadd(vec v1,vec v2){
     }
     return NULL;
 }
-
-mat weightstomat(layer l){
-    u32 h = l.nc;
-    u32 w = l.n[0].wc;
-    mat res = newMat(w, h);
-    for(u32 y = 0; y < h;y++){
-        for(u32 x = 0; x < w;x++){
-            res->data[x][y] = l.n[y].w[x];
-        }
-    }
-    return res;
-}
-
