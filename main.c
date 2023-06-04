@@ -16,23 +16,29 @@ cpl data[] = {
 #define data_count (sizeof(data)/sizeof(data[0]))
 
 
-/*
-f32 cost(neuron n){
+//need to make a "global" cost function so that i can input whatever i want into it and not
+//have to change it, this will come in handy for backpropagation.
+f32 cost(model m){
 	f32 res = 0.0f;
 	for(size_t i = 0; i < data_count; i++){
 		f32 y = 0;
-		for(u32 j = 0; j < n->wc;j++){
-			f32 x = data[i][j];
-			y += x * n->w[j];
-		}
-		y = sig(y + n->b);
+		vec vinput = newVec(2);
+		vinput->data[0] = data[i][0];
+		vinput->data[1] = data[i][1];
+
+		vec resc = compute(m, vinput);
+		y = resc->data[0];
+		destroyVec(vinput);
+		destroyVec(resc);
 		f32 d = y - data[i][2];
 		res += d*d;
 
 	}
-	res /= data_count;
+	res /= (float)data_count;
 	return res;
 }
+
+/*
 void train(neuron n,f32 eps, f32 rate){
 	f32 * dw = malloc(n->wc*sizeof(f32));
 	f32 c = cost(n);
@@ -116,13 +122,13 @@ int main(){
 	vec in = newVec(2);
 	in->data[0] = 1.0f;
 	in->data[1] = 0.0f;
-
+	printf("calc\n");
 	vec res = compute(nn,in);	//magic!
 	printf("input : \n");
 	displayVec(in);
 	printf("result : \n");
 	displayVec(res);
-
+	printf("cost : %f\n",cost(nn));
 
 	destroyVec(in);
 	destroyVec(res);
