@@ -1,6 +1,7 @@
 #ifndef MODEL_H
 #define MODEL_H
 #include "matrix.h"
+#include <sys/types.h>
 typedef unsigned int u32;
 typedef float f32;
 
@@ -16,6 +17,14 @@ typedef struct model_s{
 	layer * l;	
 }model_t;
 
+typedef struct data_s{
+	u32 entry_count;
+	u32 input_length;
+	u32 output_length;
+	f32 ** inputs;
+	f32 ** outputs;
+}data_t;
+
 typedef model_t * model;
 
 typedef struct descriptor_s{
@@ -23,15 +32,16 @@ typedef struct descriptor_s{
 	u32 descsize;
 }descriptor;
 
-
 layer newlayer(u32 wc,u32 nc);
 void destroyLayer(layer l);
 model newModel(descriptor arch);
 void destroyModel(model m);
-//compute : a function that takes in a model and modifies it's output layer
-vec compute(model m,vec vinput);
+//forward : a function that takes in a model and modifies it's output layer
+vec forward(model m,vec vinput);
 f32 sig(f32 x);
 f32 reLU(f32 x);
+data_t newdataset(u32 entries,u32 inputs, u32 outputs);
+void freedataset(data_t data);
 
 
 #endif

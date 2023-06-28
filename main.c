@@ -18,79 +18,29 @@ cpl data[] = {
 
 //need to make a "global" cost function so that i can input whatever i want into it and not
 //have to change it, this will come in handy for backpropagation.
-f32 cost(model m){
+f32 cost(model m,data_t e){
 	f32 res = 0.0f;
-	for(size_t i = 0; i < data_count; i++){
-		f32 y = 0;
+	for(size_t i = 0; i < e.entry_count; i++){
 		vec vinput = newVec(2);
-		vinput->data[0] = data[i][0];
-		vinput->data[1] = data[i][1];
+		for(u32 j = 0; j < e.input_length;j++){
+			vinput->data[j] = e.inputs[i][j];
+		}
 
-		vec resc = compute(m, vinput);
-		y = resc->data[0];
+		vec resc = forward(m, vinput);
+		for(u32 k = 0; k < e.output_length;k++){
+			f32 y = resc->data[k];
+			f32 d = y - e.outputs[i][k];
+			res += d*d;
+		}
 		destroyVec(vinput);
 		destroyVec(resc);
-		f32 d = y - data[i][2];
-		res += d*d;
 
 	}
-	res /= (float)data_count;
+	res /= (float)e.entry_count;
 	return res;
 }
 
-/*
-void train(neuron n,f32 eps, f32 rate){
-	f32 * dw = malloc(n->wc*sizeof(f32));
-	f32 c = cost(n);
-	for(u32 j = 0; j < n->wc;j++){
-		f32 save = n->w[j];
-		n->w[j] += eps;
-		dw[j] = rate * ((cost(n)-c)/eps);
-		n->w[j] = save;
-	}
-	f32 save  = n->b;
-	n->b += eps;
-	f32 db = rate * ((cost(n)-c)/eps);
-	n->b = save;
-	n->b -= db;
-	for(u32 j = 0; j < n->wc;j++){
-		n->w[j] -= dw[j];
-	}
-	free(dw);
-	//printf("cost : %f \tW1 : %f \tW2 : %f \tB: %f \n",cost(n),n->w[0],n->w[1],n->b);
-	//printf("%f\n",cost(w1,w2,b));
-}*/
 int main(){
-	/*
-	srand(time(0));
-	neuron n = newNeuron(2);
-	//printf("w1 : %f, w2 : %f, B : %f , cost : %f\n",w1,w2,b,c);
-	f32 eps = 1e-1;
-	f32 rate = 1e-1;
-
-	for(size_t i = 0; i < data_count; i++){
-		f32 x1 = data[i][0];
-		f32 x2 = data[i][1];
-		f32 y = sig((x1*n->w[0]) + (x2*n->w[1]) + n->b);
-		printf("actual : %f \texpected : %f\n",y,data[i][2]);
-
-	}
-	printf("cost : %f\n",cost(n));
-
-	u32 tc = 10000000;
-	printf("training %u times\n",tc);
-	for(u32 i = 0; i < tc; i++){
-		train(n, eps, rate);
-	}
-	
-	for(size_t i = 0; i < data_count; i++){
-		f32 x1 = data[i][0];
-		f32 x2 = data[i][1];
-		f32 y = sig((x1*n->w[0]) + (x2*n->w[1]) + n->b);
-		printf("actual : %f \texpected : %f\n",y,data[i][2]);
-
-	}
-	printf("cost : %f\n",cost(n));*/
 	descriptor arch;
 	arch.descsize = 3;
 	arch.desc = malloc(sizeof(u32)*arch.descsize);
@@ -122,13 +72,32 @@ int main(){
 	vec in = newVec(2);
 	in->data[0] = 1.0f;
 	in->data[1] = 0.0f;
+
+	printf("setting up dataset\n");
+
+	data_t data = newdataset(4, 2,1);
+	data.inputs[0][0] = 0;
+	data.inputs[0][1] = 0;
+	data.inputs[1][0] = 1;
+	data.inputs[1][1] = 0;
+	data.inputs[2][0] = 0;
+	data.inputs[2][1] = 1;
+	data.inputs[3][0] = 1;
+	data.inputs[3][1] = 1;
+
+	data.outputs[0][0] = 0;
+	data.outputs[1][0] = 1;
+	data.outputs[2][0] = 1;
+	data.outputs[3][0] = 0;
+
+
 	printf("calc\n");
-	vec res = compute(nn,in);	//magic!
+	vec res = forward(nn,in);	//magic!
 	printf("input : \n");
 	displayVec(in);
 	printf("result : \n");
 	displayVec(res);
-	printf("cost : %f\n",cost(nn));
+	printf("cost : %f\n",cost(nn,data));
 
 	destroyVec(in);
 	destroyVec(res);

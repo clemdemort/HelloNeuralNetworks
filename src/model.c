@@ -58,7 +58,7 @@ void destroyModel(model m){
     free(m);
 }
 
-vec compute(model m,vec vinput){
+vec forward(model m,vec vinput){
 	vec vprev = vcpy(vinput);
 	for(u32 i = 0;i < m->lc;i++){
 		mat m1 = m->l[i].weights;
@@ -78,4 +78,28 @@ vec compute(model m,vec vinput){
 		destroyVec(v1);
 	}
 	return vprev;
+}
+
+data_t newdataset(u32 entries,u32 inputs, u32 outputs){
+	data_t res;
+	res.entry_count = entries;
+	res.input_length = inputs;
+	res.output_length = outputs;
+	res.inputs  = malloc(sizeof(f32*)*entries);
+	res.outputs = malloc(sizeof(f32*)*entries);
+
+	for(u32 i = 0; i < entries; i++){
+		res.inputs[i]  = malloc(sizeof(f32)*inputs);
+		res.outputs[i] = malloc(sizeof(f32)*outputs);
+	}
+	return res;
+}
+
+void freedataset(data_t data){
+	for(u32 i = 0; i < data.entry_count; i++){
+		free(data.inputs[i] );
+		free(data.outputs[i]);
+	}
+	free(data.inputs);
+	free(data.outputs);
 }
