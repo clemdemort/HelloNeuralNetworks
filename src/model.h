@@ -36,12 +36,14 @@ layer newlayer(u32 wc,u32 nc);
 void destroyLayer(layer l);
 model newModel(descriptor arch);
 void destroyModel(model m);
+void zeroModel(model m);
+void randModel(model m);
 //forward : a function that takes in a model and modifies it's output layer
 vec forward(model m,vec vinput);
 f32 sig(f32 x);
 f32 reLU(f32 x);
 data_t newdataset(u32 entries,u32 inputs, u32 outputs);
-void freedataset(data_t data);
+void destroydataset(data_t data);
 //cost function takes in as input a model and a dataset and evaluates how close does the model
 //comes to replicating the dataset
 f32 cost(model m,data_t e);

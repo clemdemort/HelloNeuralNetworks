@@ -4,6 +4,13 @@
 #include "matrix.h"
 
 
+f32 randf32(){
+	return (f32)rand()/(f32)RAND_MAX;
+}
+f32 randf32capped(u32 cap){
+	return ((f32)(rand() % (20000*cap)) - (f32)(10000*cap))/10000.0f;
+}
+
 mat newMat(u32 width, u32 height){
     mat res = malloc(sizeof(mat_t));
     res->data = malloc(sizeof(f32*)*width);
@@ -11,6 +18,22 @@ mat newMat(u32 width, u32 height){
     res->w = width;
     res->h = height;
     return res;
+}
+
+void zeroMat(mat matrix){
+    for(u32 i = 0; i < matrix->w;i++){
+        for(u32 j = 0; j < matrix->h;j++){
+            matrix->data[i][j] = 0;
+        }
+    }
+}
+
+void randMat(mat matrix){
+    for(u32 i = 0; i < matrix->w;i++){
+        for(u32 j = 0; j < matrix->h;j++){
+            matrix->data[i][j] = randf32capped(15);
+        }
+    }
 }
 
 void destroyMat(mat matrix){
@@ -96,6 +119,19 @@ vec vcpy(vec src){
     }
     return dest;
 }
+
+void zeroVec(vec vector){
+    for(u32 i = 0; i < vector->h;i++){
+        vector->data[i] = 0;
+    }
+}
+
+void randVec(vec vector){
+    for(u32 i = 0; i < vector->h;i++){
+        vector->data[i] = randf32capped(15);
+    }
+}
+
 void destroyVec(vec vector){
     free(vector->data);
     free(vector);

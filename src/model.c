@@ -17,10 +17,6 @@ f32 reLU(f32 x){
 }
 
 
-f32 randf32(){
-	return (f32)rand()/(f32)RAND_MAX;
-}
-
 
 
 //wc : weight count -> how many weights should each neuron have (e.g how many neurons/entries before)
@@ -48,6 +44,20 @@ model newModel(descriptor arch){
 		res->l[i] = newlayer(arch.desc[i], arch.desc[i+1]);
 	}
 	return res;
+}
+
+void zeroModel(model m){
+	for(u32 i = 0; i < m->lc; i++){
+		zeroVec(m->l[i].biases);
+		zeroMat(m->l[i].weights);
+	}
+}
+
+void randModel(model m){
+	for(u32 i = 0; i < m->lc; i++){
+		randVec(m->l[i].biases);
+		randMat(m->l[i].weights);
+	}
 }
 
 void destroyModel(model m){
@@ -95,7 +105,7 @@ data_t newdataset(u32 entries,u32 inputs, u32 outputs){
 	return res;
 }
 
-void freedataset(data_t data){
+void destroydataset(data_t data){
 	for(u32 i = 0; i < data.entry_count; i++){
 		free(data.inputs[i] );
 		free(data.outputs[i]);
@@ -106,7 +116,7 @@ void freedataset(data_t data){
 
 f32 cost(model m,data_t e){
 	f32 res = 0.0f;
-	for(size_t i = 0; i < e.entry_count; i++){		//for all entries
+	for(size_t i = 0; i < e.entry_count; i++){		 //for all entries
 		vec vinput = newVec(e.input_length); //creating the input vector
 		for(u32 j = 0; j < e.input_length;j++){
 			vinput->data[j] = e.inputs[i][j];		 //putting the data inside
@@ -115,7 +125,7 @@ f32 cost(model m,data_t e){
 		vec resc = forward(m, vinput);				 //forwarding the model with the input vector
 		for(u32 k = 0; k < e.output_length;k++){
 			f32 d = resc->data[k] - e.outputs[i][k]; //calculating the difference			
-			res += d*d;								 //squaring the total (IDK why but 3b1b said so)
+			res += d*d;								 //squaring the total (IDK why but 3b1b said so) and adding it up
 		}
 		//cleaning
 		destroyVec(vinput);

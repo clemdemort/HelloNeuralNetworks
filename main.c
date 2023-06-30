@@ -7,10 +7,11 @@
 #include "src/model.h"
 
 int main(){
+	srand(time(NULL));
 	descriptor arch;
 	arch.descsize = 3;
 	arch.desc = malloc(sizeof(u32)*arch.descsize);
-	arch.desc[0] = 2;	//entry layer
+	arch.desc[0] = 2;	//input layer
 	arch.desc[1] = 2;	//hiden layer(s)
 	arch.desc[2] = 1;	//exit  layer
 	model nn = newModel(arch);
@@ -58,13 +59,15 @@ int main(){
 
 
 	printf("calc\n");
+	//randModel(nn);	//if we want to randomize the model
+	//zeroModel(nn);	//if we want every value in the model to be 0
 	vec res = forward(nn,in);	//magic!
 	printf("input : \n");
 	displayVec(in);
 	printf("result : \n");
 	displayVec(res);
 	printf("cost : %f\n",cost(nn,data));
-
+	destroydataset(data);
 	destroyVec(in);
 	destroyVec(res);
 	destroyModel(nn);

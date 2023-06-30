@@ -19,16 +19,26 @@ typedef struct vec_s{
 typedef mat_t * mat;
 typedef vec_t * vec;
 
+
+f32 randf32();
+
 //allocates memory;
 mat newMat(u32 width, u32 height);
+
 void destroyMat(mat matrix);
 void displayMat(mat matrix);
 void displayMatCol(mat matrix);
+void zeroMat(mat matrix);
+void randMat(mat matrix);
 
 //allocates memory
 vec newVec(u32 height);
 //allocates memory
 vec vcpy(vec src);
+
+void zeroVec(vec vector);
+void randVec(vec vector);
+
 void destroyVec(vec vector);
 void displayVec(vec vector);
 void displayVecCol(vec vector);
