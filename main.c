@@ -6,40 +6,6 @@
 #include "src/matrix.h"
 #include "src/model.h"
 
-typedef f32 cpl[3];
-cpl data[] = {
-	{0,0,0},
-	{0,1,1},
-	{1,0,1},
-	{1,1,0},
-};
-#define data_count (sizeof(data)/sizeof(data[0]))
-
-
-//need to make a "global" cost function so that i can input whatever i want into it and not
-//have to change it, this will come in handy for backpropagation.
-f32 cost(model m,data_t e){
-	f32 res = 0.0f;
-	for(size_t i = 0; i < e.entry_count; i++){
-		vec vinput = newVec(2);
-		for(u32 j = 0; j < e.input_length;j++){
-			vinput->data[j] = e.inputs[i][j];
-		}
-
-		vec resc = forward(m, vinput);
-		for(u32 k = 0; k < e.output_length;k++){
-			f32 y = resc->data[k];
-			f32 d = y - e.outputs[i][k];
-			res += d*d;
-		}
-		destroyVec(vinput);
-		destroyVec(resc);
-
-	}
-	res /= (float)e.entry_count;
-	return res;
-}
-
 int main(){
 	descriptor arch;
 	arch.descsize = 3;

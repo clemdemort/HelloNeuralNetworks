@@ -42,6 +42,9 @@ f32 sig(f32 x);
 f32 reLU(f32 x);
 data_t newdataset(u32 entries,u32 inputs, u32 outputs);
 void freedataset(data_t data);
+//cost function takes in as input a model and a dataset and evaluates how close does the model
+//comes to replicating the dataset
+f32 cost(model m,data_t e);
 
 
 #endif

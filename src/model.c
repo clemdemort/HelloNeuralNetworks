@@ -103,3 +103,26 @@ void freedataset(data_t data){
 	free(data.inputs);
 	free(data.outputs);
 }
+
+f32 cost(model m,data_t e){
+	f32 res = 0.0f;
+	for(size_t i = 0; i < e.entry_count; i++){		//for all entries
+		vec vinput = newVec(e.input_length); //creating the input vector
+		for(u32 j = 0; j < e.input_length;j++){
+			vinput->data[j] = e.inputs[i][j];		 //putting the data inside
+		}
+
+		vec resc = forward(m, vinput);				 //forwarding the model with the input vector
+		for(u32 k = 0; k < e.output_length;k++){
+			f32 d = resc->data[k] - e.outputs[i][k]; //calculating the difference			
+			res += d*d;								 //squaring the total (IDK why but 3b1b said so)
+		}
+		//cleaning
+		destroyVec(vinput);
+		destroyVec(resc);
+
+	}
+	//getting the mean
+	res /= (float)e.entry_count;
+	return res;
+}
