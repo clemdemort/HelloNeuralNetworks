@@ -1,6 +1,7 @@
 #ifndef MODEL_H
 #define MODEL_H
 #include "matrix.h"
+#include <stdarg.h>
 #include <sys/types.h>
 typedef unsigned int u32;
 typedef float f32;
@@ -31,6 +32,14 @@ typedef struct descriptor_s{
 	u32 * desc;
 	u32 descsize;
 }descriptor;
+
+//allocates memory
+descriptor newDescriptor(u32 descSize, ...);
+//allocates memory
+descriptor getDescriptor(model nn);
+
+void destroyDesc(descriptor arch);
+
 
 layer newlayer(u32 wc,u32 nc);
 void destroyLayer(layer l);

@@ -8,12 +8,7 @@
 
 int main(){
 	srand(time(NULL));
-	descriptor arch;
-	arch.descsize = 3;
-	arch.desc = malloc(sizeof(u32)*arch.descsize);
-	arch.desc[0] = 2;	//input layer
-	arch.desc[1] = 2;	//hiden layer(s)
-	arch.desc[2] = 1;	//exit  layer
+	descriptor arch = newDescriptor(3, 2,2,1);
 	model nn = newModel(arch);
 	//manually training the model for fun
 				//XOR gate
@@ -71,6 +66,6 @@ int main(){
 	destroyVec(in);
 	destroyVec(res);
 	destroyModel(nn);
-	free(arch.desc);
+	destroyDesc(arch);
   	return EXIT_SUCCESS;
 }
