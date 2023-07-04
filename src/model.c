@@ -22,7 +22,7 @@ f32 reLU(f32 x){
 	return max(0,x);	
 }
 
-//creates a descriptor to creae the neural network
+//creates a descriptor to create the neural network
 //the first argument is the numbers of layers
 //each argument you put next is the amount of neurons inside the layer
 //make sure that if you specify 3 layers you add 3 arguments otherwise weird things might happen.
@@ -119,8 +119,11 @@ void destroyModel(model m){
     free(m);
 }
 
-vec forward(model m,vec vinput){
+activations forward(model m,vec vinput){
 	vec vprev = vcpy(vinput);
+	activations a = malloc(sizeof(activations_t));
+	a->lc = m->lc+1;
+	a->layers = malloc(sizeof(vec_t)*a->lc);
 	for(u32 i = 0;i < m->lc;i++){
 		mat m1 = m->l[i].weights;
 		vec va = vprev;
@@ -135,10 +138,35 @@ vec forward(model m,vec vinput){
 		vprev = v2;
 
 		//free the memory!!!
-		destroyVec(va);
 		destroyVec(v1);
+		a->layers[i] = *va;
+		free(va);	//needs to be freed because it was malloc'd into existence
 	}
-	return vprev;
+	a->layers[a->lc-1] = *vprev;
+	free(vprev);	//needs to be freed because it was malloc'd into existence
+	return a;
+}
+
+void destroyActivations(activations a){
+	for(u32 i = 0; i < a->lc; i++){
+		free(a->layers[i].data);
+	}
+	free(a->layers);
+	free(a);
+}
+
+vec outputlayer(activations a){
+	return &a->layers[a->lc-1];
+}
+
+void displayActivations(activations a){
+	for(u32 i = 0; i < a->lc; i++){
+		printf("layer %u :\n",i);
+		for(u32 j = 0; j < a->layers[i].h; j++){
+			printf(" %f,",a->layers[i].data[j]);
+		}
+		printf("\n");
+	}
 }
 
 data_t newdataset(u32 entries,u32 inputs, u32 outputs){
@@ -173,14 +201,15 @@ f32 cost(model m,data_t e){
 			vinput->data[j] = e.inputs[i][j];		 //putting the data inside
 		}
 
-		vec resc = forward(m, vinput);				 //forwarding the model with the input vector
+		activations resA = forward(m, vinput);				 //forwarding the model with the input vector
+		vec resc = outputlayer(resA);
 		for(u32 k = 0; k < e.output_length;k++){
 			f32 d = resc->data[k] - e.outputs[i][k]; //calculating the difference			
 			res += d*d;								 //squaring the total (IDK why but 3b1b said so) and adding it up
 		}
 		//cleaning
 		destroyVec(vinput);
-		destroyVec(resc);
+		destroyActivations(resA);
 
 	}
 	//getting the mean

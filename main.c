@@ -56,15 +56,16 @@ int main(){
 	printf("calc\n");
 	//randModel(nn);	//if we want to randomize the model
 	//zeroModel(nn);	//if we want every value in the model to be 0
-	vec res = forward(nn,in);	//magic!
+	activations res = forward(nn,in);	//magic!
 	printf("input : \n");
 	displayVec(in);
 	printf("result : \n");
-	displayVec(res);
+	displayVec(outputlayer(res));
 	printf("cost : %f\n",cost(nn,data));
+	displayActivations(res);
 	destroydataset(data);
 	destroyVec(in);
-	destroyVec(res);
+	destroyActivations(res);
 	destroyModel(nn);
 	destroyDesc(arch);
   	return EXIT_SUCCESS;

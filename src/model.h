@@ -18,6 +18,16 @@ typedef struct model_s{
 	layer * l;	
 }model_t;
 
+typedef struct activations_s{
+	//layer count
+	u32 lc;
+	//activations stored in layers
+	vec_t * layers;
+}activations_t;
+
+typedef activations_t * activations;
+
+
 typedef struct data_s{
 	u32 entry_count;
 	u32 input_length;
@@ -47,8 +57,14 @@ model newModel(descriptor arch);
 void destroyModel(model m);
 void zeroModel(model m);
 void randModel(model m);
-//forward : a function that takes in a model and modifies it's output layer
-vec forward(model m,vec vinput);
+
+
+//forward : a function that takes in a model and feeds it input data then computes the activations from that
+activations forward(model m,vec vinput);
+void destroyActivations(activations A);
+void displayActivations(activations a);
+//does not allocate anything it just looks something up
+vec outputlayer(activations a);
 f32 sig(f32 x);
 f32 reLU(f32 x);
 data_t newdataset(u32 entries,u32 inputs, u32 outputs);
