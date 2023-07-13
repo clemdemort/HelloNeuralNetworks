@@ -3,6 +3,7 @@
 
 #include "matrix.h"
 
+#define RANDCAP 5
 
 f32 randf32(){
 	return (f32)rand()/(f32)RAND_MAX;
@@ -31,7 +32,7 @@ void zeroMat(mat matrix){
 void randMat(mat matrix){
     for(u32 i = 0; i < matrix->w;i++){
         for(u32 j = 0; j < matrix->h;j++){
-            matrix->data[i][j] = randf32capped(15);
+            matrix->data[i][j] = randf32capped(RANDCAP);
         }
     }
 }
@@ -62,7 +63,7 @@ void displayMat(mat matrix){
     for(u32 y = 0; y < matrix->h;y++){
         printf("| ");
         for(u32 x = 0; x < matrix->w;x++){
-            printf("%.3f ",matrix->data[x][y]);
+            printf("%f ",matrix->data[x][y]);
         }
         printf(" |\n");
     }
@@ -78,6 +79,11 @@ void resetcol(){
 void setcol(uc r,uc g,uc b){
     printf("\033[48;2;%u;%u;%um",r,g,b);    //ANSI colour code
 }
+
+void setTXTcol(uc r,uc g,uc b){
+    printf("\033[38;2;%u;%u;%um",r,g,b);    //ANSI colour code
+}
+
 
 /*
 
@@ -128,7 +134,7 @@ void zeroVec(vec vector){
 
 void randVec(vec vector){
     for(u32 i = 0; i < vector->h;i++){
-        vector->data[i] = randf32capped(15);
+        vector->data[i] = randf32capped(RANDCAP);
     }
 }
 
@@ -142,7 +148,7 @@ void displayVec(vec vector){
     printf("-+\n");
     for(u32 y = 0; y < vector->h;y++){
         printf("| ");
-        printf("%.3f",vector->data[y]);
+        printf("%f",vector->data[y]);
         printf(" |\n");
     }
     printf("+-");

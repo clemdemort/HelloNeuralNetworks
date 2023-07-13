@@ -193,6 +193,29 @@ void destroydataset(data_t data){
 	free(data.outputs);
 }
 
+void HumanVerification(model nn,data_t data){
+	for(size_t i = 0; i < data.entry_count; i++){		 	//for all entries
+		vec vinput = malloc(sizeof(vec_t));	  	//creating the input vector
+		vinput->h = data.input_length;						//
+		vinput->data = data.inputs[i];		 				//putting the data inside
+
+		activations resA = forward(nn, vinput);				 //forwarding the model with the input vector
+		vec resc = outputlayer(resA);
+		for(u32 i = 0; i < vinput->h;i++){
+			printf(" %f",vinput->data[i]);
+		}
+		printf(" =");
+		for(u32 k = 0; k < data.output_length;k++){
+			printf(" %f",resc->data[k]);		
+		}
+		printf("\n");
+		//cleaning
+		free(vinput);
+		destroyActivations(resA);
+
+	}
+}
+
 f32 cost(model m,data_t e){
 	f32 res = 0.0f;
 	for(size_t i = 0; i < e.entry_count; i++){		 	//for all entries
@@ -203,6 +226,7 @@ f32 cost(model m,data_t e){
 		activations resA = forward(m, vinput);				 //forwarding the model with the input vector
 		vec resc = outputlayer(resA);
 		for(u32 k = 0; k < e.output_length;k++){
+			//printf("resc->data[%u] = %f e.outputs[%u][%u] = %f\n",k,resc->data[k],i,k,e.outputs[i][k]);
 			f32 d = resc->data[k] - e.outputs[i][k]; //calculating the difference			
 			res += d*d;								 //squaring the total (IDK why but 3b1b said so) and adding it up
 		}
@@ -216,9 +240,10 @@ f32 cost(model m,data_t e){
 	return res;
 }
 
+//wip
 
 model nn_backpropagation(model nn,data_t e){
-	if(nn->l[0].weights->w =! e.input_length || nn->l[nn->lc-1].biases->h != e.output_length){printf("input/output mismatch between model and dataset\n");return NULL;}
+	if(nn->l[0].weights->w != e.input_length || nn->l[nn->lc-1].biases->h != e.output_length){printf("input/output mismatch between model and dataset\n");return NULL;}
 	descriptor arch = getDescriptor(nn);
     model g = newModel(arch);	//G for gradient
 
@@ -232,4 +257,58 @@ model nn_backpropagation(model nn,data_t e){
 	}
 	destroyDesc(arch);
 	return g;
+}
+
+//inefficient but works
+model finite_diff(model nn, data_t t, float eps)
+{
+    f32 saved;
+    f32 c = cost(nn, t);
+
+	descriptor arch = getDescriptor(nn);
+    model g = newModel(arch);
+	destroyDesc(arch);
+
+	for(u32 i = 0; i < nn->lc;i++){//for every layer
+		for(u32 j = 0; j < nn->l[i].weights->h;j++){//for every activation
+			for(u32 k = 0; k < nn->l[i].weights->w;k++){//for every weight
+				saved = nn->l[i].weights->data[k][j];
+				nn->l[i].weights->data[k][j] += eps;
+				g->l[i].weights->data[k][j] = (cost(nn,t)-c)/eps;
+				nn->l[i].weights->data[k][j] = saved;
+			}
+
+			saved = nn->l[i].biases->data[j];
+			nn->l[i].biases->data[j] += eps;
+			g->l[i].biases->data[j] = (cost(nn,t)-c)/eps;
+			nn->l[i].biases->data[j] = saved;
+
+		}
+	}
+
+    return g;
+}
+
+void learn(model nn, model g, float rate){
+
+	if(nn->lc != g->lc)printf("model and gradient dont have the same architecture\n");
+	if(nn->l[0].biases->h != g->l[0].biases->h)printf("model and gradient dont have the same architecture\n");
+
+	for(u32 i = 0; i < nn->lc;i++){//for every layer
+		for(u32 j = 0; j < nn->l[i].weights->h;j++){//for every activation
+			for(u32 k = 0; k < nn->l[i].weights->w;k++){//for every weight
+				nn->l[i].weights->data[k][j] -= g->l[i].weights->data[k][j]*rate;
+			}
+			nn->l[i].biases->data[j] -= g->l[i].biases->data[j]*rate;
+
+		}
+	}
+}
+
+void displayModel(model nn){
+	for(u32 i = 0; i < nn->lc;i++){
+		printf("layer %u:\n",i);
+		displayMat(nn->l[i].weights);
+		displayVec(nn->l[i].biases);
+	}
 }

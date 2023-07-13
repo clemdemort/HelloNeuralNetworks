@@ -72,6 +72,10 @@ void destroydataset(data_t data);
 //cost function takes in as input a model and a dataset and evaluates how close does the model
 //comes to replicating the dataset
 f32 cost(model m,data_t e);
+void displayModel(model nn);
+model finite_diff(model nn, data_t t, float eps);
+void learn(model nn, model g, float rate);
+void HumanVerification(model nn,data_t data);
 
 
 #endif

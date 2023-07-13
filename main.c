@@ -6,34 +6,19 @@
 #include "src/matrix.h"
 #include "src/model.h"
 
+void _resetcol(){
+    printf("\033[0m");                      //ANSI colour code
+}
+
+void _setcol(uc r,uc g,uc b){
+    printf("\033[38;2;%u;%u;%um",r,g,b);    //ANSI colour code
+}
+
+
 int main(){
 	srand(time(NULL));
-	descriptor arch = newDescriptor(3, 2,2,1);
+	descriptor arch = newDescriptor(3,2,4,1);//works with 3,2,2,1 but it fails more often
 	model nn = newModel(arch);
-	//manually training the model for fun
-				//XOR gate
-	//or
-	nn->l[0].weights->data[0][0] = 10.0f;	
-	nn->l[0].weights->data[1][0] = 10.0f;	
-	nn->l[0].biases->data[0]	 = -5.0f;	
-	
-	//nand
-	nn->l[0].weights->data[0][1] = -10.0f;	
-	nn->l[0].weights->data[1][1] = -10.0f;	
-	nn->l[0].biases->data[1]	 =  15.0f;	
-	
-	//and
-	nn->l[1].weights->data[0][0] =  10.0f;	
-	nn->l[1].weights->data[1][0] =  10.0f;	
-	nn->l[1].biases->data[0]	 = -15.0f;		
-
-
-	//input:
-	//change these if you want to see if it works
-
-	vec in = newVec(2);
-	in->data[0] = 1.0f;
-	in->data[1] = 0.0f;
 
 	printf("setting up dataset\n");
 
@@ -52,21 +37,31 @@ int main(){
 	data.outputs[2][0] = 1;
 	data.outputs[3][0] = 0;
 
-
-	printf("calc\n");
-	//randModel(nn);	//if we want to randomize the model
+	randModel(nn);	//if we want to randomize the model
 	//zeroModel(nn);	//if we want every value in the model to be 0
-	activations res = forward(nn,in);	//magic!
-	printf("input : \n");
-	displayVec(in);
-	printf("result : \n");
-	displayVec(outputlayer(res));
-	printf("cost : %f\n",cost(nn,data));
-	displayActivations(res);
+	float eps = 0.1;
+	float rate = 0.5;
+
+	f32 iniC = cost(nn,data);
+	for(u32 i = 0; i <= 20000;i++){
+		model grad = finite_diff(nn, data, eps);
+		learn(nn, grad, rate);
+		destroyModel(grad);
+		if(i %1000 == 0)printf("%u\tcost : %f\n",i,cost(nn,data));
+	}
+
+
+	printf("[");_setcol(255,0,0);printf("performance review");_resetcol();printf("]\n");
+	printf("initial cost is : %f finished cost is : %f\n",iniC,cost(nn,data));
+	printf("Grade : ");
+	if(cost(nn, data) <= 0.001){_setcol(0, 255, 0);printf("PASS\n");_resetcol();}
+	if(cost(nn, data) >  0.001){_setcol(255, 0, 0);printf("FAIL\n");_resetcol();}
+
+	HumanVerification(nn,data);
+
 	destroydataset(data);
-	destroyVec(in);
-	destroyActivations(res);
 	destroyModel(nn);
 	destroyDesc(arch);
+
   	return EXIT_SUCCESS;
 }
