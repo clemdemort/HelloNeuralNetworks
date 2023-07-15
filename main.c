@@ -40,10 +40,10 @@ int main(){
 	randModel(nn);	//if we want to randomize the model
 	//zeroModel(nn);	//if we want every value in the model to be 0
 	float eps = 0.1;
-	float rate = 0.5;
+	float rate = 5;
 
 	f32 iniC = cost(nn,data);
-	for(u32 i = 0; i <= 20000;i++){
+	for(u32 i = 0; i <= 10000;i++){
 		model grad = finite_diff(nn, data, eps);
 		learn(nn, grad, rate);
 		destroyModel(grad);
