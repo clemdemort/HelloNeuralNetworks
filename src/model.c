@@ -10,7 +10,7 @@ f32 sig(f32 x){
 
 //derivative of sigmoid function
 f32 Dsig(f32 x){
-	return sig(x)*(1-sig(x));
+	return sig(x)*(1.f-sig(x));
 }
 
 f32 max(f32 a,f32 b){
@@ -147,6 +147,25 @@ activations forward(model m,vec vinput){
 	return a;
 }
 
+activations newActivations(descriptor D){
+	activations a = malloc(sizeof(activations_t));
+	a->lc = D.descsize;
+	a->layers = malloc(sizeof(vec_t)*a->lc);
+	for(u32 i = 0; i < D.descsize; i++){
+		a->layers[i].h = D.desc[i];
+		a->layers[i].data = calloc(D.desc[i],sizeof(f32));
+	}
+	return a;
+}
+
+void zeroActivations(activations a){
+	for(u32 i = 0; i < a->lc; i++){
+		for(u32 j = 0; j < a->layers[i].h;j++){
+			a->layers[i].data[j] = 0;
+		}
+	}
+}
+
 void destroyActivations(activations a){
 	for(u32 i = 0; i < a->lc; i++){
 		free(a->layers[i].data);
@@ -219,7 +238,7 @@ void HumanVerification(model nn,data_t data){
 f32 cost(model m,data_t e){
 	f32 res = 0.0f;
 	for(size_t i = 0; i < e.entry_count; i++){		 	//for all entries
-		vec vinput = malloc(sizeof(vec_t));	  	//creating the input vector
+		vec vinput = malloc(sizeof(vec_t));	  			//creating the input vector
 		vinput->h = e.input_length;						//
 		vinput->data = e.inputs[i];		 				//putting the data inside
 
@@ -240,21 +259,61 @@ f32 cost(model m,data_t e){
 	return res;
 }
 
-//wip
 
-model nn_backpropagation(model nn,data_t e){
+//wip (testing)
+model backpropagation(model nn,data_t e){
 	if(nn->l[0].weights->w != e.input_length || nn->l[nn->lc-1].biases->h != e.output_length){printf("input/output mismatch between model and dataset\n");return NULL;}
 	descriptor arch = getDescriptor(nn);
     model g = newModel(arch);	//G for gradient
+	activations GA = newActivations(arch);
 
+	u32 n = e.entry_count;
 	for(u32 i = 0; i < e.entry_count;i++){
 		vec vinput = malloc(sizeof(vec_t));	  	//creating the input vector
 		vinput->h = e.input_length;						//
 		vinput->data = e.inputs[i];		 				//putting the data inside
 		activations act = forward(nn, vinput);
 		free(vinput);
+
+
+		//create empty activations for G
+		zeroActivations(GA);
+		//calculate Dcost in output of G
+		//this is the error
+        for (u32 j = 0; j < outputlayer(act)->h; j++) {
+			outputlayer(GA)->data[j] = 2*(outputlayer(act)->data[j] - e.outputs[i][j]);
+		}
+
+		for(u32 l = GA->lc-1; l > 0; l--){//for each layer starting by the end
+			for(u32 j = 0; j < GA->layers[l].h;j++){//for each activation of that layer
+				float a = act->layers[l].data[j];
+                float da = GA->layers[l].data[j];
+                float qa = Dsig(a);
+				//printf("Layer = %u DA = %f\n",l,da);
+				g->l[l-1].biases->data[j] += da*qa;
+                for (size_t k = 0; k < act->layers[l-1].h; ++k) {
+                    float pa = act->layers[l-1].data[k];
+                    float w = nn->l[l-1].weights->data[k][j];
+					g->l[l-1].weights->data[k][j] += da*qa*pa;
+					//printf("DA = %f\n",da);
+                    GA->layers[l-1].data[k] += da*qa*w;
+					//printf("QA = %f\n",qa);
+                }
+			}
+		}
 		destroyActivations(act);
 	}
+
+	//displayModel(g);
+	for (size_t i = 0; i < g->lc-1; ++i) {
+    	for (size_t j = 0; j < g->l[i].weights->h; ++j) {
+	        for (size_t k = 0; k < g->l[i].weights->w; ++k) {
+				g->l[i].weights->data[k][j] /= n;
+            }
+			g->l[i].biases->data[j] /= n;
+        }
+    }
+	destroyActivations(GA);
 	destroyDesc(arch);
 	return g;
 }

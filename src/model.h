@@ -16,7 +16,7 @@ typedef struct model_s{
 	u32 lc;			
 	//layer list
 	layer * l;	
-}model_t;
+}model_t; 
 
 typedef struct activations_s{
 	//layer count
@@ -61,6 +61,7 @@ void randModel(model m);
 
 //forward : a function that takes in a model and feeds it input data then computes the activations from that
 activations forward(model m,vec vinput);
+activations newActivations(descriptor D);
 void destroyActivations(activations A);
 void displayActivations(activations a);
 //does not allocate anything it just looks something up
@@ -74,6 +75,7 @@ void destroydataset(data_t data);
 f32 cost(model m,data_t e);
 void displayModel(model nn);
 model finite_diff(model nn, data_t t, float eps);
+model backpropagation(model nn,data_t e);
 void learn(model nn, model g, float rate);
 void HumanVerification(model nn,data_t data);
 
