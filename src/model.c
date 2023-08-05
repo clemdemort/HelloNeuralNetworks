@@ -26,7 +26,7 @@ f32 reLU(f32 x){
 //the first argument is the numbers of layers
 //each argument you put next is the amount of neurons inside the layer
 //make sure that if you specify 3 layers you add 3 arguments otherwise weird things might happen.
-descriptor newDescriptor(u32 descSize, ...){
+descriptor newDescriptor(u32 descSize, ...){//works
 	
 	descriptor arch;
 	arch.descsize = descSize;
@@ -54,10 +54,10 @@ descriptor newDescriptor(u32 descSize, ...){
     return arch;
 }
 
-descriptor getDescriptor(model nn){
+descriptor getDescriptor(model nn){//works
 	descriptor arch;
 	arch.descsize = nn->lc+1;
-	arch.desc = malloc(arch.descsize);
+	arch.desc = malloc(arch.descsize*sizeof(u32));
 	arch.desc[0] = nn->l[0].weights->w;
 	for(u32 i = 1; i < arch.descsize;i++){
 		arch.desc[i] = nn->l[i-1].biases->h;
@@ -65,14 +65,14 @@ descriptor getDescriptor(model nn){
 	return arch;
 }
 
-void destroyDesc(descriptor arch){
+void destroyDesc(descriptor arch){//works
 	free(arch.desc);
 }
 
 
 //wc : weight count -> how many weights should each neuron have (e.g how many neurons/entries before)
 //nc : neuron count -> how many neurons in the layer
-layer newlayer(u32 wc,u32 nc){
+layer newlayer(u32 wc,u32 nc){//works
 	layer res;
 
 	res.weights = newMat(wc, nc);
@@ -80,13 +80,13 @@ layer newlayer(u32 wc,u32 nc){
 	return res;
 }
 
-void destroyLayer(layer l){
+void destroyLayer(layer l){//works
 	destroyVec(l.biases);
 	destroyMat(l.weights);
 }
 
 
-model newModel(descriptor arch){
+model newModel(descriptor arch){//works
 	model res = malloc(sizeof(model_t));
 	res->lc = arch.descsize -1;	//we dont store the input layer
 	res->l = malloc(sizeof(layer)*res->lc);
@@ -97,21 +97,21 @@ model newModel(descriptor arch){
 	return res;
 }
 
-void zeroModel(model m){
+void zeroModel(model m){//works
 	for(u32 i = 0; i < m->lc; i++){
 		zeroVec(m->l[i].biases);
 		zeroMat(m->l[i].weights);
 	}
 }
 
-void randModel(model m){
+void randModel(model m){//works
 	for(u32 i = 0; i < m->lc; i++){
 		randVec(m->l[i].biases);
 		randMat(m->l[i].weights);
 	}
 }
 
-void destroyModel(model m){
+void destroyModel(model m){//works
 	for(u32 i = 0; i < m->lc; i++){
 		destroyLayer(m->l[i]);
 	}
@@ -119,11 +119,9 @@ void destroyModel(model m){
     free(m);
 }
 
-activations forward(model m,vec vinput){
+void forward(activations a, model m,vec vinput){//probably works (hard to test)
+	//SHOULD PUT VERIFICATION TO SEE IF ACTIVATION IS CORRECTLY ALLOCATED
 	vec vprev = vcpy(vinput);
-	activations a = malloc(sizeof(activations_t));
-	a->lc = m->lc+1;
-	a->layers = malloc(sizeof(vec_t)*a->lc);
 	for(u32 i = 0;i < m->lc;i++){
 		mat m1 = m->l[i].weights;
 		vec va = vprev;
@@ -139,15 +137,17 @@ activations forward(model m,vec vinput){
 
 		//free the memory!!!
 		destroyVec(v1);
-		a->layers[i] = *va;
+		free(a->layers[i].data);
+		a->layers[i].data = va->data;
 		free(va);	//needs to be freed because it was malloc'd into existence
 	}
-	a->layers[a->lc-1] = *vprev;
+	//needless to say this is a dirty solution, however it is the fastest i can think of complexity wise
+	free(a->layers[a->lc-1].data);		//freeing the preexisting data
+	a->layers[a->lc-1].data = vprev->data;	//putting the new data in it's stead
 	free(vprev);	//needs to be freed because it was malloc'd into existence
-	return a;
 }
 
-activations newActivations(descriptor D){
+activations newActivations(descriptor D){//works
 	activations a = malloc(sizeof(activations_t));
 	a->lc = D.descsize;
 	a->layers = malloc(sizeof(vec_t)*a->lc);
@@ -158,7 +158,16 @@ activations newActivations(descriptor D){
 	return a;
 }
 
-void zeroActivations(activations a){
+void destroyActivations(activations a){//works
+	for(u32 i = 0; i < a->lc; i++){
+		free(a->layers[i].data);
+	}
+
+	free(a->layers);
+	free(a);
+}
+
+void zeroActivations(activations a){//works
 	for(u32 i = 0; i < a->lc; i++){
 		for(u32 j = 0; j < a->layers[i].h;j++){
 			a->layers[i].data[j] = 0;
@@ -166,19 +175,12 @@ void zeroActivations(activations a){
 	}
 }
 
-void destroyActivations(activations a){
-	for(u32 i = 0; i < a->lc; i++){
-		free(a->layers[i].data);
-	}
-	free(a->layers);
-	free(a);
-}
 
-vec outputlayer(activations a){
+vec outputlayer(activations a){//works
 	return &a->layers[a->lc-1];
 }
 
-void displayActivations(activations a){
+void displayActivations(activations a){//works
 	for(u32 i = 0; i < a->lc; i++){
 		printf("layer %u :\n",i);
 		for(u32 j = 0; j < a->layers[i].h; j++){
@@ -213,12 +215,15 @@ void destroydataset(data_t data){
 }
 
 void HumanVerification(model nn,data_t data){
+	descriptor D = getDescriptor(nn);
+	activations resA = newActivations(D);
+	destroyDesc(D);
 	for(size_t i = 0; i < data.entry_count; i++){		 	//for all entries
 		vec vinput = malloc(sizeof(vec_t));	  	//creating the input vector
 		vinput->h = data.input_length;						//
 		vinput->data = data.inputs[i];		 				//putting the data inside
 
-		activations resA = forward(nn, vinput);				 //forwarding the model with the input vector
+		forward(resA , nn, vinput);				 //forwarding the model with the input vector
 		vec resc = outputlayer(resA);
 		for(u32 i = 0; i < vinput->h;i++){
 			printf(" %f",vinput->data[i]);
@@ -230,19 +235,46 @@ void HumanVerification(model nn,data_t data){
 		printf("\n");
 		//cleaning
 		free(vinput);
-		destroyActivations(resA);
 
 	}
+	destroyActivations(resA);
+}
+
+void visualization(model nn,data_t data){
+	descriptor D = getDescriptor(nn);
+	activations resA = newActivations(D);
+	destroyDesc(D);
+	mat out = newMat(data.output_length,data.entry_count);
+	for(size_t i = 0; i < data.entry_count; i++){		 	//for all entries
+		vec vinput = malloc(sizeof(vec_t));	  	//creating the input vector
+		vinput->h = data.input_length;						//
+		vinput->data = data.inputs[i];		 				//putting the data inside
+
+		forward(resA, nn, vinput);				 //forwarding the model with the input vector
+		vec resc = outputlayer(resA);
+		for(u32 k = 0; k < data.output_length;k++){
+			out->data[k][i] = resc->data[k];		
+		}
+		//cleaning
+		free(vinput);
+
+	}
+	displayMatCol(out);
+	destroyMat(out);
+	destroyActivations(resA);
 }
 
 f32 cost(model m,data_t e){
 	f32 res = 0.0f;
+	descriptor D = getDescriptor(m);
+	activations resA = newActivations(D);
+	destroyDesc(D);
 	for(size_t i = 0; i < e.entry_count; i++){		 	//for all entries
 		vec vinput = malloc(sizeof(vec_t));	  			//creating the input vector
 		vinput->h = e.input_length;						//
 		vinput->data = e.inputs[i];		 				//putting the data inside
 
-		activations resA = forward(m, vinput);				 //forwarding the model with the input vector
+		forward(resA, m, vinput);				 	//forwarding the model with the input vector
 		vec resc = outputlayer(resA);
 		for(u32 k = 0; k < e.output_length;k++){
 			//printf("resc->data[%u] = %f e.outputs[%u][%u] = %f\n",k,resc->data[k],i,k,e.outputs[i][k]);
@@ -251,28 +283,30 @@ f32 cost(model m,data_t e){
 		}
 		//cleaning
 		free(vinput);
-		destroyActivations(resA);
 
 	}
 	//getting the mean
-	res /= (float)e.entry_count;
+	res /= (f32)e.entry_count;
+	destroyActivations(resA);
 	return res;
 }
 
 
 //wip (testing)
-model backpropagation(model nn,data_t e){
-	if(nn->l[0].weights->w != e.input_length || nn->l[nn->lc-1].biases->h != e.output_length){printf("input/output mismatch between model and dataset\n");return NULL;}
+void backpropagation(model g,model nn,data_t e){
+	//SHOULD PUT VERIFICATION TO SEE IF ACTIVATION IS CORRECTLY ALLOCATED
+	if(nn->l[0].weights->w != e.input_length || nn->l[nn->lc-1].biases->h != e.output_length){printf("input/output mismatch between model and dataset\n");}
 	descriptor arch = getDescriptor(nn);
-    model g = newModel(arch);	//G for gradient
 	activations GA = newActivations(arch);
-
+	activations act = newActivations(arch);
+	destroyDesc(arch);
+	zeroModel(g);
 	u32 n = e.entry_count;
 	for(u32 i = 0; i < e.entry_count;i++){
 		vec vinput = malloc(sizeof(vec_t));	  	//creating the input vector
 		vinput->h = e.input_length;						//
 		vinput->data = e.inputs[i];		 				//putting the data inside
-		activations act = forward(nn, vinput);
+		forward(act,nn, vinput);
 		free(vinput);
 
 
@@ -282,18 +316,21 @@ model backpropagation(model nn,data_t e){
 		//this is the error
         for (u32 j = 0; j < outputlayer(act)->h; j++) {
 			outputlayer(GA)->data[j] = 2*(outputlayer(act)->data[j] - e.outputs[i][j]);
+			//printf("%f\n",outputlayer(GA)->data[j]);
 		}
 
 		for(u32 l = GA->lc-1; l > 0; l--){//for each layer starting by the end
 			for(u32 j = 0; j < GA->layers[l].h;j++){//for each activation of that layer
-				float a = act->layers[l].data[j];
-                float da = GA->layers[l].data[j];
-                float qa = Dsig(a);
+				f32 a = act->layers[l].data[j];
+                f32 da = GA->layers[l].data[j];
+                f32 qa = Dsig(a);
 				//printf("Layer = %u DA = %f\n",l,da);
 				g->l[l-1].biases->data[j] += da*qa;
-                for (size_t k = 0; k < act->layers[l-1].h; ++k) {
-                    float pa = act->layers[l-1].data[k];
-                    float w = nn->l[l-1].weights->data[k][j];
+                for (size_t k = 0; k < GA->layers[l-1].h; ++k) {
+					//j = height
+					//k = width
+                    f32 pa = act->layers[l-1].data[k];
+                    f32 w = nn->l[l-1].weights->data[k][j];
 					g->l[l-1].weights->data[k][j] += da*qa*pa;
 					//printf("DA = %f\n",da);
                     GA->layers[l-1].data[k] += da*qa*w;
@@ -301,33 +338,28 @@ model backpropagation(model nn,data_t e){
                 }
 			}
 		}
-		destroyActivations(act);
 	}
+	destroyActivations(act);
 
 	//displayModel(g);
 	for (size_t i = 0; i < g->lc-1; ++i) {
     	for (size_t j = 0; j < g->l[i].weights->h; ++j) {
 	        for (size_t k = 0; k < g->l[i].weights->w; ++k) {
-				g->l[i].weights->data[k][j] /= n;
+				g->l[i].weights->data[k][j] /= (f32)n;
             }
-			g->l[i].biases->data[j] /= n;
+			g->l[i].biases->data[j] /= (f32)n;
         }
     }
 	destroyActivations(GA);
-	destroyDesc(arch);
-	return g;
 }
 
 //inefficient but works
-model finite_diff(model nn, data_t t, float eps)
+void finite_diff(model g, model nn, data_t t, f32 eps)
 {
+	//SHOULD PUT VERIFICATION TO SEE IF ACTIVATION IS CORRECTLY ALLOCATED
     f32 saved;
     f32 c = cost(nn, t);
-
-	descriptor arch = getDescriptor(nn);
-    model g = newModel(arch);
-	destroyDesc(arch);
-
+	zeroModel(g);
 	for(u32 i = 0; i < nn->lc;i++){//for every layer
 		for(u32 j = 0; j < nn->l[i].weights->h;j++){//for every activation
 			for(u32 k = 0; k < nn->l[i].weights->w;k++){//for every weight
@@ -345,26 +377,25 @@ model finite_diff(model nn, data_t t, float eps)
 		}
 	}
 
-    return g;
 }
 
-void learn(model nn, model g, float rate){
+void learn(model nn, model g, f32 rate){
 
-	if(nn->lc != g->lc)printf("model and gradient dont have the same architecture\n");
-	if(nn->l[0].biases->h != g->l[0].biases->h)printf("model and gradient dont have the same architecture\n");
+	//if(nn->lc != g->lc)printf("model and gradient dont have the same architecture\n");
+	//if(nn->l[0].biases->h != g->l[0].biases->h)printf("model and gradient dont have the same architecture\n");
 
 	for(u32 i = 0; i < nn->lc;i++){//for every layer
 		for(u32 j = 0; j < nn->l[i].weights->h;j++){//for every activation
 			for(u32 k = 0; k < nn->l[i].weights->w;k++){//for every weight
-				nn->l[i].weights->data[k][j] -= g->l[i].weights->data[k][j]*rate;
+				nn->l[i].weights->data[k][j] -= rate * (g->l[i].weights->data[k][j]);
 			}
-			nn->l[i].biases->data[j] -= g->l[i].biases->data[j]*rate;
+			nn->l[i].biases->data[j] -= rate * (g->l[i].biases->data[j]);
 
 		}
 	}
 }
 
-void displayModel(model nn){
+void displayModel(model nn){//works
 	for(u32 i = 0; i < nn->lc;i++){
 		printf("layer %u:\n",i);
 		displayMat(nn->l[i].weights);

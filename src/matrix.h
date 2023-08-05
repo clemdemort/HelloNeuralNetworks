@@ -6,6 +6,8 @@
 typedef unsigned int u32;
 typedef float f32;
 typedef unsigned char uc;
+//a matrix is always accessed like so : mat[x][y]
+//x max is width and y max is height
 typedef struct mat_s{
     u32 w,h;       //width and height
     f32 ** data;    //actual data

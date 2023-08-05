@@ -3,16 +3,16 @@
 
 #include "matrix.h"
 
-#define RANDCAP 5
+#define RANDCAP 1
 
-f32 randf32(){
+f32 randf32(){//works
 	return (f32)rand()/(f32)RAND_MAX;
 }
-f32 randf32capped(u32 cap){
-	return ((f32)(rand() % (20000*cap)) - (f32)(10000*cap))/10000.0f;
+f32 randf32capped(u32 cap){//works
+	return ((f32)(rand() % (200000*cap)) - (f32)(100000.0*cap))/100000.0f;
 }
 
-mat newMat(u32 width, u32 height){
+mat newMat(u32 width, u32 height){//works
     mat res = malloc(sizeof(mat_t));
     res->data = malloc(sizeof(f32*)*width);
     for(u32 i = 0; i < width;i++)res->data[i] = calloc(height,sizeof(f32));
@@ -21,7 +21,7 @@ mat newMat(u32 width, u32 height){
     return res;
 }
 
-void zeroMat(mat matrix){
+void zeroMat(mat matrix){//works
     for(u32 i = 0; i < matrix->w;i++){
         for(u32 j = 0; j < matrix->h;j++){
             matrix->data[i][j] = 0;
@@ -29,7 +29,7 @@ void zeroMat(mat matrix){
     }
 }
 
-void randMat(mat matrix){
+void randMat(mat matrix){//works
     for(u32 i = 0; i < matrix->w;i++){
         for(u32 j = 0; j < matrix->h;j++){
             matrix->data[i][j] = randf32capped(RANDCAP);
@@ -37,7 +37,7 @@ void randMat(mat matrix){
     }
 }
 
-void destroyMat(mat matrix){
+void destroyMat(mat matrix){//works
     for(u32 i = 0; i < matrix->w;i++)free(matrix->data[i]);
     free(matrix->data);
     free(matrix);
@@ -179,7 +179,7 @@ void forallVecElements(vec vector , f32 (*fun)(f32)){
     }
 }
 
-vec MatrixVectorProduct(mat m, vec v){
+vec MatrixVectorProduct(mat m, vec v){//correct
     if(m->w == v->h){
         vec res = newVec(m->h);
         for(u32 x = 0;x < m->h;x++){

@@ -17,6 +17,7 @@ typedef struct model_s{
 	//layer list
 	layer * l;	
 }model_t; 
+typedef model_t * model;
 
 typedef struct activations_s{
 	//layer count
@@ -36,7 +37,6 @@ typedef struct data_s{
 	f32 ** outputs;
 }data_t;
 
-typedef model_t * model;
 
 typedef struct descriptor_s{
 	u32 * desc;
@@ -60,10 +60,11 @@ void randModel(model m);
 
 
 //forward : a function that takes in a model and feeds it input data then computes the activations from that
-activations forward(model m,vec vinput);
+void forward(activations a, model m,vec vinput);
 activations newActivations(descriptor D);
 void destroyActivations(activations A);
 void displayActivations(activations a);
+void zeroActivations(activations a);
 //does not allocate anything it just looks something up
 vec outputlayer(activations a);
 f32 sig(f32 x);
@@ -74,10 +75,10 @@ void destroydataset(data_t data);
 //comes to replicating the dataset
 f32 cost(model m,data_t e);
 void displayModel(model nn);
-model finite_diff(model nn, data_t t, float eps);
-model backpropagation(model nn,data_t e);
-void learn(model nn, model g, float rate);
+void finite_diff(model g,model nn, data_t t, f32 eps);
+void backpropagation(model g, model nn,data_t e);
+void learn(model nn, model g, f32 rate);
 void HumanVerification(model nn,data_t data);
-
+void visualization(model nn,data_t data);
 
 #endif

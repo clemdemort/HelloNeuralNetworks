@@ -6,74 +6,117 @@
 #include "src/matrix.h"
 #include "src/model.h"
 
+
+//currently Not working, bug hunting until i find the issue(s) things are looking up though :)
+
+
 void _resetcol(){
     printf("\033[0m");                      //ANSI colour code
+}
+
+void gotoxy(int x,int y)
+{
+    printf("%c[%d;%df",0x1B,y,x);
 }
 
 void _setcol(uc r,uc g,uc b){
     printf("\033[38;2;%u;%u;%um",r,g,b);    //ANSI colour code
 }
 
+f32 distxy(f32 x, f32 y , f32 cx, f32 cy){
+	return sqrt(((cx-x)*(cx-x)) + ((cy-y)*(cy-y)) );
+}
 
-int main(){
-	srand(time(NULL));
-	descriptor arch = newDescriptor(3,2,5,1);//works with 3,2,2,1 but it fails more often
-	model nn = newModel(arch);
+void IMGvisualization(model nn,u32 w,u32 h){
+	mat out = newMat(w,h);
+	vec vin = newVec(2);
+	descriptor D = getDescriptor(nn);
+	activations act = newActivations(D);
+	destroyDesc(D);
+	for(u32 i = 0; i < h;i++){
+		for(u32 j = 0; j < w;j++){
+			f32 x = j/(f32)(w-1);
+			f32 y = i/(f32)(h-1);
+			vin->data[0] = x;
+			vin->data[1] = y;
+			forward(act,nn,vin);
+			out->data[j][i] = outputlayer(act)->data[0];
 
-	printf("setting up dataset\n");
-
-	data_t data = newdataset(4, 2,1);
-	data.inputs[0][0] = 0;
-	data.inputs[0][1] = 0;
-	data.inputs[1][0] = 1;
-	data.inputs[1][1] = 0;
-	data.inputs[2][0] = 0;
-	data.inputs[2][1] = 1;
-	data.inputs[3][0] = 1;
-	data.inputs[3][1] = 1;
-
-	data.outputs[0][0] = 0;
-	data.outputs[1][0] = 1;
-	data.outputs[2][0] = 1;
-	data.outputs[3][0] = 0;
-
-	randModel(nn);	//if we want to randomize the model
-	//zeroModel(nn);	//if we want every value in the model to be 0
-	float eps = 0.1;
-	float rate = 0.5;
-
-	f32 iniC = cost(nn,data);
-	f32 prevC = iniC;
-	u32 added = 0;
-	for(u32 i = 0; i < 1000+added;i++){
-		model grad = backpropagation(nn, data);
-		learn(nn, grad, rate);
-		destroyModel(grad);
-		if(i %1000 == 0){
-			f32 c = cost(nn,data);
-			printf("%u\tcost : %f\n",i,c);
-			if(c > 0.0001){
-				added+= 1000;
-				f32 d = c-prevC;
-				if(d >= 0 && d < 0.0001){randModel(nn);_setcol(255,0,0);printf("no progress: randomized model\n");_resetcol();}
-			}
-			prevC = c;
 		}
 	}
+	destroyActivations(act);
+	destroyVec(vin);
+	displayMatCol(out);
+	destroyMat(out);
+}
+
+void IMGdata(data_t d,u32 w,u32 h){
+	mat out = newMat(w,h);
+	u32 a = 0;
+	for(u32 i = 0; i < h;i++){
+		for(u32 j = 0; j < w;j++,a++){
+			out->data[j][i] = d.outputs[a][0];
+
+		}
+	}
+	displayMatCol(out);
+	destroyMat(out);
+}
+
+int main(){
+	
+	srand(time(NULL));
+	descriptor arch = newDescriptor(4,2,15,5,1);
+	model nn = newModel(arch);
+	model grad = newModel(arch);
+	randModel(nn);
+	u32 w = 10;
+	u32 h = 10;
+	data_t data = newdataset(w*h, 2,1);
+	u32 a = 0;
+	for(u32 i = 0; i < h;i++){
+		for(u32 j = 0; j < w;j++,a++){
+			f32 x = j/(f32)(w-1);
+			f32 y = i/(f32)(h-1);
+			data.inputs[a][0] = x;
+			data.inputs[a][1] = y;
+			f32 d = distxy(0.5,0.5, x, y);
+			data.outputs[a][0] = (d > 0.2 && d < 0.4);
+			data.outputs[a][1] = (1);
 
 
-	printf("[");_setcol(255,0,0);printf("performance review");_resetcol();printf("]\n");
-	printf("initial cost is : %f finished cost is : %f\n",iniC,cost(nn,data));
-	printf("Grade : ");
-	if(cost(nn, data) <= 0.001){_setcol(0, 255, 0);printf("PASS\n");_resetcol();}
-	if(cost(nn, data) >  0.001){_setcol(255, 0, 0);printf("FAIL\n");_resetcol();}
+		}
+	}
+	//*/
 
-	HumanVerification(nn,data);
+	f32 rate = 0.1f;
+	system("clear");
+	//sleep(1);
+	for(u32 i = 0; i < 100000;i++){
+		backpropagation(grad,nn,data);
+		learn(nn,grad,rate);
+		if(i%100 == 1){
+			//sleep(1);
+			gotoxy(0,0);
+			IMGvisualization(nn,w,h);
+			IMGdata(data, w, h);
+			f32 c = cost(nn,data);
+			printf("cost : %f\n",c);
+			
+		}
+	}
+	activations act = newActivations(arch);
+	vec vinput = malloc(sizeof(vec_t));	  			//creating the input vector
+	vinput->h = data.input_length;						//
+	vinput->data = data.inputs[0];
+	forward(act, nn, vinput);
+	free(vinput);
+	destroyActivations(act);
+ 	//displayModel(nn);
 
 	destroydataset(data);
 	destroyModel(nn);
+	destroyModel(grad);
 	destroyDesc(arch);
-
-
   	return EXIT_SUCCESS;
 }
