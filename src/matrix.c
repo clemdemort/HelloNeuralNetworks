@@ -5,40 +5,48 @@
 
 #define RANDCAP 1
 
-f32 randf32(){//works
-	return (f32)rand()/(f32)RAND_MAX;
+nlf randnlf(){//works
+	return (nlf)rand()/(nlf)RAND_MAX;
 }
-f32 randf32capped(u32 cap){//works
-	return ((f32)(rand() % (200000*cap)) - (f32)(100000.0*cap))/100000.0f;
+nlf randnlfcapped(nlu cap){//works
+	return ((nlf)(rand() % (200000*cap)) - (nlf)(100000.0*cap))/100000.0f;
 }
 
-mat newMat(u32 width, u32 height){//works
+nlf mat_at(mat m, nlu x,nlu y){
+    return m->data[x][y];
+}
+nlf vec_at(vec v, nlu x){
+    
+    return v->data[x];
+}
+
+mat newMat(nlu width, nlu height){//works
     mat res = malloc(sizeof(mat_t));
-    res->data = malloc(sizeof(f32*)*width);
-    for(u32 i = 0; i < width;i++)res->data[i] = calloc(height,sizeof(f32));
+    res->data = malloc(sizeof(nlf*)*width);
+    for(nlu i = 0; i < width;i++)res->data[i] = calloc(height,sizeof(nlf));
     res->w = width;
     res->h = height;
     return res;
 }
 
 void zeroMat(mat matrix){//works
-    for(u32 i = 0; i < matrix->w;i++){
-        for(u32 j = 0; j < matrix->h;j++){
+    for(nlu i = 0; i < matrix->w;i++){
+        for(nlu j = 0; j < matrix->h;j++){
             matrix->data[i][j] = 0;
         }
     }
 }
 
 void randMat(mat matrix){//works
-    for(u32 i = 0; i < matrix->w;i++){
-        for(u32 j = 0; j < matrix->h;j++){
-            matrix->data[i][j] = randf32capped(RANDCAP);
+    for(nlu i = 0; i < matrix->w;i++){
+        for(nlu j = 0; j < matrix->h;j++){
+            matrix->data[i][j] = randnlfcapped(RANDCAP);
         }
     }
 }
 
 void destroyMat(mat matrix){//works
-    for(u32 i = 0; i < matrix->w;i++)free(matrix->data[i]);
+    for(nlu i = 0; i < matrix->w;i++)free(matrix->data[i]);
     free(matrix->data);
     free(matrix);
 }
@@ -58,17 +66,17 @@ void destroyMat(mat matrix){//works
 */
 void displayMat(mat matrix){
     printf("+-");
-    for(u32 x = 0; x < matrix->w;x++)printf("      ");
+    for(nlu x = 0; x < matrix->w;x++)printf("      ");
     printf("-+\n");
-    for(u32 y = 0; y < matrix->h;y++){
+    for(nlu y = 0; y < matrix->h;y++){
         printf("| ");
-        for(u32 x = 0; x < matrix->w;x++){
+        for(nlu x = 0; x < matrix->w;x++){
             printf("%f ",matrix->data[x][y]);
         }
         printf(" |\n");
     }
     printf("+-");
-    for(u32 x = 0; x < matrix->w;x++)printf("      ");
+    for(nlu x = 0; x < matrix->w;x++)printf("      ");
     printf("-+\n");
 
 }
@@ -93,11 +101,11 @@ void setTXTcol(uc r,uc g,uc b){
 void displayMatCol(mat matrix){
     resetcol();
     printf("+-");
-    for(u32 x = 0; x < matrix->w;x++)printf("  ");
+    for(nlu x = 0; x < matrix->w;x++)printf("  ");
     printf("-+\n");
-    for(u32 y = 0; y < matrix->h;y++){
+    for(nlu y = 0; y < matrix->h;y++){
         printf("| ");
-        for(u32 x = 0; x < matrix->w;x++){
+        for(nlu x = 0; x < matrix->w;x++){
             uc col = 255*matrix->data[x][y];
             setcol(col,col,col);
             printf("  ");
@@ -106,35 +114,35 @@ void displayMatCol(mat matrix){
         printf(" |\n");
     }
     printf("+-");
-    for(u32 x = 0; x < matrix->w;x++)printf("  ");
+    for(nlu x = 0; x < matrix->w;x++)printf("  ");
     printf("-+\n");
 
 }
 
 
-vec newVec(u32 height){
+vec newVec(nlu height){
     vec res = malloc(sizeof(vec_t));
-    res->data = calloc(height,sizeof(f32));
+    res->data = calloc(height,sizeof(nlf));
     res->h = height;
     return res;
 }
 vec vcpy(vec src){
     vec dest = newVec(src->h);
-    for(u32 i = 0; i < src->h;i++){
+    for(nlu i = 0; i < src->h;i++){
         dest->data[i] = src->data[i];
     }
     return dest;
 }
 
 void zeroVec(vec vector){
-    for(u32 i = 0; i < vector->h;i++){
+    for(nlu i = 0; i < vector->h;i++){
         vector->data[i] = 0;
     }
 }
 
 void randVec(vec vector){
-    for(u32 i = 0; i < vector->h;i++){
-        vector->data[i] = randf32capped(RANDCAP);
+    for(nlu i = 0; i < vector->h;i++){
+        vector->data[i] = randnlfcapped(RANDCAP);
     }
 }
 
@@ -146,7 +154,7 @@ void displayVec(vec vector){
     printf("+-");
     printf("     ");
     printf("-+\n");
-    for(u32 y = 0; y < vector->h;y++){
+    for(nlu y = 0; y < vector->h;y++){
         printf("| ");
         printf("%f",vector->data[y]);
         printf(" |\n");
@@ -160,7 +168,7 @@ void displayVecCol(vec vector){
     printf("+-");
     printf("  ");
     printf("-+\n");
-    for(u32 y = 0; y < vector->h;y++){
+    for(nlu y = 0; y < vector->h;y++){
         printf("| ");
         uc col = 255*vector->data[y];
         setcol(col,col,col);
@@ -173,8 +181,8 @@ void displayVecCol(vec vector){
     printf("-+\n");
 }
 
-void forallVecElements(vec vector , f32 (*fun)(f32)){
-    for(u32 i = 0; i < vector->h; i++){
+void forallVecElements(vec vector , nlf (*fun)(nlf)){
+    for(nlu i = 0; i < vector->h; i++){
         vector->data[i] = fun(vector->data[i]);
     }
 }
@@ -182,8 +190,8 @@ void forallVecElements(vec vector , f32 (*fun)(f32)){
 vec MatrixVectorProduct(mat m, vec v){//correct
     if(m->w == v->h){
         vec res = newVec(m->h);
-        for(u32 x = 0;x < m->h;x++){
-            for(u32 y = 0; y < v->h;y++){
+        for(nlu x = 0;x < m->h;x++){
+            for(nlu y = 0; y < v->h;y++){
                 res->data[x] += m->data[y][x] * v->data[y];
             }
         }
@@ -197,7 +205,7 @@ vec MatrixVectorProduct(mat m, vec v){//correct
 vec Vadd(vec v1,vec v2){
     if(v1->h == v2->h){//the operation could technicaly be done but since it shouldn't happen it'll be an error here
         vec res = newVec(v1->h);
-        for(u32 i = 0; i < v1->h;i++){
+        for(nlu i = 0; i < v1->h;i++){
             res->data[i] = v1->data[i] + v2->data[i];
         }
         return res;

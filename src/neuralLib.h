@@ -1,7 +1,354 @@
+#ifndef NEURALLIB_H
+#define NEURALLIB_H
+#include <math.h>
+#include <stdarg.h>
 #include <stdio.h>
-#include <stdlib.h>
-#include "matrix.h"
-#include "model.h"
+#include <sys/types.h>
+
+#define RANDCAP 1
+
+//neurallib unsigned integer
+typedef unsigned int nlu;
+//neurallib float
+typedef float nlf;
+typedef unsigned char uc;
+
+//a matrix is always accessed like so : mat[x][y]
+//x max is width and y max is height
+typedef struct mat_s{
+    nlu w,h;       //width and height
+    nlf ** data;    //actual data
+}mat_t;
+
+typedef struct vec_s{
+    nlu h;         //width 
+    nlf * data;    //actual data
+}vec_t;
+
+typedef mat_t * mat;
+typedef vec_t * vec;
+#define mat_at(m, x, y) (m)->data[x][y]
+#define vec_at(v, x) (v)->data[x]
+
+nlf randnlf();
+
+//allocates memory;
+mat newMat(nlu width, nlu height);
+
+void destroyMat(mat matrix);
+void displayMat(mat matrix);
+void displayMatCol(mat matrix);
+void zeroMat(mat matrix);
+void randMat(mat matrix);
+//allocates memory
+vec newVec(nlu height);
+//allocates memory
+vec vcpy(vec src);
+
+void zeroVec(vec vector);
+void randVec(vec vector);
+
+void destroyVec(vec vector);
+void displayVec(vec vector);
+void displayVecCol(vec vector);
+void forallVecElements(vec vector , nlf (*fun)(nlf));
+
+
+//math
+
+//allocates memory
+vec MatrixVectorProduct(mat m, vec v);
+//allocates memory
+vec Vadd(vec v1,vec v2);
+
+//neural network implementation
+
+typedef struct layer_s{
+	mat weights;
+	vec biases;
+}layer;
+
+typedef struct model_s{
+	//layer count	
+	nlu lc;			
+	//layer list
+	layer * l;	
+}model_t; 
+typedef model_t * model;
+
+typedef struct activations_s{
+	//layer count
+	nlu lc;
+	//activations stored in layers
+	vec_t * layers;
+}activations_t;
+
+typedef activations_t * activations;
+
+
+typedef struct data_s{
+	nlu entry_count;
+	nlu input_length;
+	nlu output_length;
+	nlf ** inputs;
+	nlf ** outputs;
+}data_t;
+
+
+typedef struct descriptor_s{
+	nlu * desc;
+	nlu descsize;
+}descriptor;
+
+//allocates memory
+descriptor newDescriptor(nlu descSize, ...);
+//allocates memory
+descriptor getDescriptor(model nn);
+
+void destroyDesc(descriptor arch);
+
+
+layer newlayer(nlu wc,nlu nc);
+void destroyLayer(layer l);
+model newModel(descriptor arch);
+void destroyModel(model m);
+void zeroModel(model m);
+void randModel(model m);
+
+
+//forward : a function that takes in a model and feeds it input data then computes the activations from that
+void forward(activations a, model m,vec vinput);
+activations newActivations(descriptor D);
+void destroyActivations(activations A);
+void displayActivations(activations a);
+void zeroActivations(activations a);
+
+#define outputlayer(a) &(a)->layers[(a)->lc-1];
+nlf sig(nlf x);
+nlf reLU(nlf x);
+data_t newdataset(nlu entries,nlu inputs, nlu outputs);
+void destroydataset(data_t data);
+//cost function takes in as input a model and a dataset and evaluates how close does the model
+//comes to replicating the dataset
+nlf cost(model m,data_t e);
+void displayModel(model nn);
+void finite_diff(model g,model nn, data_t t, nlf eps);
+void backpropagation(model g, model nn,data_t e);
+void learn(model nn, model g, nlf rate);
+void HumanVerification(model nn,data_t data);
+void visualization(model nn,data_t data);
+
+
+
+#endif
+
+#ifndef NEURALLIB_IMPLEMENTATION
+#define NEURALLIB_IMPLEMENTATION
+
+nlf randnlf(){//works
+	return (nlf)rand()/(nlf)RAND_MAX;
+}
+nlf randnlfcapped(nlu cap){//works
+	return ((nlf)(rand() % (200000*cap)) - (nlf)(100000.0*cap))/100000.0f;
+}
+
+mat newMat(nlu width, nlu height){//works
+    mat res = malloc(sizeof(mat_t));
+    res->data = malloc(sizeof(nlf*)*width);
+    for(nlu i = 0; i < width;i++)res->data[i] = calloc(height,sizeof(nlf));
+    res->w = width;
+    res->h = height;
+    return res;
+}
+
+void zeroMat(mat matrix){//works
+    for(nlu i = 0; i < matrix->w;i++){
+        for(nlu j = 0; j < matrix->h;j++){
+            mat_at(matrix, i, j) = 0;
+        }
+    }
+}
+
+void randMat(mat matrix){//works
+    for(nlu i = 0; i < matrix->w;i++){
+        for(nlu j = 0; j < matrix->h;j++){
+            matrix->data[i][j] = randnlfcapped(RANDCAP);
+        }
+    }
+}
+
+void destroyMat(mat matrix){//works
+    for(nlu i = 0; i < matrix->w;i++)free(matrix->data[i]);
+    free(matrix->data);
+    free(matrix);
+}
+
+
+/*
+
+    I want this kind of display:
+
+            +-     -+
+            | 1 0 0 |
+            | 0 1 0 |
+            | 0 0 1 |
+            +-     -+
+
+    we will assume all data is between 0 and 1 since thats what we will be dealing with when working with neural networks
+*/
+void displayMat(mat matrix){
+    printf("+-");
+    for(nlu x = 0; x < matrix->w;x++)printf("      ");
+    printf("-+\n");
+    for(nlu y = 0; y < matrix->h;y++){
+        printf("| ");
+        for(nlu x = 0; x < matrix->w;x++){
+            printf("%f ",matrix->data[x][y]);
+        }
+        printf(" |\n");
+    }
+    printf("+-");
+    for(nlu x = 0; x < matrix->w;x++)printf("      ");
+    printf("-+\n");
+
+}
+
+void resetcol(){
+    printf("\033[0m");                      //ANSI colour code
+}
+void setcol(uc r,uc g,uc b){
+    printf("\033[48;2;%u;%u;%um",r,g,b);    //ANSI colour code
+}
+
+void setTXTcol(uc r,uc g,uc b){
+    printf("\033[38;2;%u;%u;%um",r,g,b);    //ANSI colour code
+}
+
+
+/*
+
+    Will display a matrix with every element between 0 and 1 as shades of grey
+
+*/
+void displayMatCol(mat matrix){
+    resetcol();
+    printf("+-");
+    for(nlu x = 0; x < matrix->w;x++)printf("  ");
+    printf("-+\n");
+    for(nlu y = 0; y < matrix->h;y++){
+        printf("| ");
+        for(nlu x = 0; x < matrix->w;x++){
+            uc col = 255*matrix->data[x][y];
+            setcol(col,col,col);
+            printf("  ");
+        }
+        resetcol();
+        printf(" |\n");
+    }
+    printf("+-");
+    for(nlu x = 0; x < matrix->w;x++)printf("  ");
+    printf("-+\n");
+
+}
+
+
+vec newVec(nlu height){
+    vec res = malloc(sizeof(vec_t));
+    res->data = calloc(height,sizeof(nlf));
+    res->h = height;
+    return res;
+}
+vec vcpy(vec src){
+    vec dest = newVec(src->h);
+    for(nlu i = 0; i < src->h;i++){
+        dest->data[i] = src->data[i];
+    }
+    return dest;
+}
+
+void zeroVec(vec vector){
+    for(nlu i = 0; i < vector->h;i++){
+        vector->data[i] = 0;
+    }
+}
+
+void randVec(vec vector){
+    for(nlu i = 0; i < vector->h;i++){
+        vector->data[i] = randnlfcapped(RANDCAP);
+    }
+}
+
+void destroyVec(vec vector){
+    free(vector->data);
+    free(vector);
+}
+void displayVec(vec vector){
+    printf("+-");
+    printf("     ");
+    printf("-+\n");
+    for(nlu y = 0; y < vector->h;y++){
+        printf("| ");
+        printf("%f",vector->data[y]);
+        printf(" |\n");
+    }
+    printf("+-");
+    printf("     ");
+    printf("-+\n");
+}
+
+void displayVecCol(vec vector){
+    printf("+-");
+    printf("  ");
+    printf("-+\n");
+    for(nlu y = 0; y < vector->h;y++){
+        printf("| ");
+        uc col = 255*vector->data[y];
+        setcol(col,col,col);
+        printf("  ");
+        resetcol();
+        printf(" |\n");
+    }
+    printf("+-");
+    printf("  ");
+    printf("-+\n");
+}
+
+void forallVecElements(vec vector , nlf (*fun)(nlf)){
+    for(nlu i = 0; i < vector->h; i++){
+        vector->data[i] = fun(vector->data[i]);
+    }
+}
+
+vec MatrixVectorProduct(mat m, vec v){//correct
+    if(m->w == v->h){
+        vec res = newVec(m->h);
+        for(nlu x = 0;x < m->h;x++){
+            for(nlu y = 0; y < v->h;y++){
+                res->data[x] += m->data[y][x] * v->data[y];
+            }
+        }
+        return res;
+    }else{
+        fprintf(stderr,"[ERROR] matrix width is not equal to vector length, operation is impossible!\n");
+    }
+    return NULL;
+}
+
+//allocates memory
+vec Vadd(vec v1,vec v2){
+    if(v1->h == v2->h){//the operation could technicaly be done but since it shouldn't happen it'll be an error here
+        vec res = newVec(v1->h);
+        for(nlu i = 0; i < v1->h;i++){
+            res->data[i] = v1->data[i] + v2->data[i];
+        }
+        return res;
+    }else{
+        fprintf(stderr,"[ERROR] vector 1 length is not equal to vector 2 length, operation is impossible!\n");
+    }
+    return NULL;
+}
+
+
 
 //sigmoid function
 nlf sig(nlf x){
@@ -176,10 +523,6 @@ void zeroActivations(activations a){//works
 }
 
 
-vec outputlayer(activations a){//works
-	return &a->layers[a->lc-1];
-}
-
 void displayActivations(activations a){//works
 	for(nlu i = 0; i < a->lc; i++){
 		printf("layer %u :\n",i);
@@ -314,8 +657,10 @@ void backpropagation(model g,model nn,data_t e){
 		zeroActivations(GA);
 		//calculate Dcost in output of G
 		//this is the error
-        for (nlu j = 0; j < outputlayer(act)->h; j++) {
-			outputlayer(GA)->data[j] = 2*(outputlayer(act)->data[j] - e.outputs[i][j]);
+        vec outp = outputlayer(act);
+        vec outpA = outputlayer(GA);
+        for (nlu j = 0; j < outp->h; j++) {
+			outpA->data[j] = 2*(outp->data[j] - e.outputs[i][j]);
 			//printf("%f\n",outputlayer(GA)->data[j]);
 		}
 
@@ -402,3 +747,6 @@ void displayModel(model nn){//works
 		displayVec(nn->l[i].biases);
 	}
 }
+
+
+#endif

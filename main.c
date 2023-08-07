@@ -1,10 +1,8 @@
-#include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
 #include <math.h>
-#include "src/matrix.h"
-#include "src/model.h"
+#include "src/neuralLib.h"
 
 
 //currently Not working, bug hunting until i find the issue(s) things are looking up though :)
@@ -23,24 +21,25 @@ void _setcol(uc r,uc g,uc b){
     printf("\033[38;2;%u;%u;%um",r,g,b);    //ANSI colour code
 }
 
-f32 distxy(f32 x, f32 y , f32 cx, f32 cy){
+nlf distxy(nlf x, nlf y , nlf cx, nlf cy){
 	return sqrt(((cx-x)*(cx-x)) + ((cy-y)*(cy-y)) );
 }
 
-void IMGvisualization(model nn,u32 w,u32 h){
+void IMGvisualization(model nn,nlu w,nlu h){
 	mat out = newMat(w,h);
 	vec vin = newVec(2);
 	descriptor D = getDescriptor(nn);
 	activations act = newActivations(D);
 	destroyDesc(D);
-	for(u32 i = 0; i < h;i++){
-		for(u32 j = 0; j < w;j++){
-			f32 x = j/(f32)(w-1);
-			f32 y = i/(f32)(h-1);
+	for(nlu i = 0; i < h;i++){
+		for(nlu j = 0; j < w;j++){
+			nlf x = j/(nlf)(w-1);
+			nlf y = i/(nlf)(h-1);
 			vin->data[0] = x;
 			vin->data[1] = y;
 			forward(act,nn,vin);
-			out->data[j][i] = outputlayer(act)->data[0];
+			vec outp = outputlayer(act);
+			out->data[j][i] = outp->data[0];
 
 		}
 	}
@@ -50,11 +49,11 @@ void IMGvisualization(model nn,u32 w,u32 h){
 	destroyMat(out);
 }
 
-void IMGdata(data_t d,u32 w,u32 h){
+void IMGdata(data_t d,nlu w,nlu h){
 	mat out = newMat(w,h);
-	u32 a = 0;
-	for(u32 i = 0; i < h;i++){
-		for(u32 j = 0; j < w;j++,a++){
+	nlu a = 0;
+	for(nlu i = 0; i < h;i++){
+		for(nlu j = 0; j < w;j++,a++){
 			out->data[j][i] = d.outputs[a][0];
 
 		}
@@ -70,29 +69,27 @@ int main(){
 	model nn = newModel(arch);
 	model grad = newModel(arch);
 	randModel(nn);
-	u32 w = 10;
-	u32 h = 10;
+	nlu w = 10;
+	nlu h = 10;
 	data_t data = newdataset(w*h, 2,1);
-	u32 a = 0;
-	for(u32 i = 0; i < h;i++){
-		for(u32 j = 0; j < w;j++,a++){
-			f32 x = j/(f32)(w-1);
-			f32 y = i/(f32)(h-1);
+	nlu a = 0;
+	for(nlu i = 0; i < h;i++){
+		for(nlu j = 0; j < w;j++,a++){
+			nlf x = j/(nlf)(w-1);
+			nlf y = i/(nlf)(h-1);
 			data.inputs[a][0] = x;
 			data.inputs[a][1] = y;
-			f32 d = distxy(0.5,0.5, x, y);
-			data.outputs[a][0] = (d > 0.2 && d < 0.4);
-			data.outputs[a][1] = (1);
-
+			nlf d = distxy(0.5,0.5, x, y);
+			data.outputs[a][0] = ( d < 0.4);
 
 		}
 	}
 	//*/
 
-	f32 rate = 0.1f;
+	nlf rate = 0.1f;
 	system("clear");
 	//sleep(1);
-	for(u32 i = 0; i < 100000;i++){
+	for(nlu i = 0; i < 1000000;i++){
 		backpropagation(grad,nn,data);
 		learn(nn,grad,rate);
 		if(i%100 == 1){
@@ -100,8 +97,10 @@ int main(){
 			gotoxy(0,0);
 			IMGvisualization(nn,w,h);
 			IMGdata(data, w, h);
-			f32 c = cost(nn,data);
-			printf("cost : %f\n",c);
+			//visualization(nn, data);
+			//displayModel(grad);
+			nlf c = cost(nn,data);
+			printf("%u %f\n",i,c);
 			
 		}
 	}

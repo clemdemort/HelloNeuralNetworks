@@ -3,38 +3,39 @@
 #include <math.h>
 
 
-typedef unsigned int u32;
-typedef float f32;
+typedef unsigned int nlu;
+typedef float nlf;
 typedef unsigned char uc;
 //a matrix is always accessed like so : mat[x][y]
 //x max is width and y max is height
 typedef struct mat_s{
-    u32 w,h;       //width and height
-    f32 ** data;    //actual data
+    nlu w,h;       //width and height
+    nlf ** data;    //actual data
 }mat_t;
 
 typedef struct vec_s{
-    u32 h;         //width 
-    f32 * data;    //actual data
+    nlu h;         //width 
+    nlf * data;    //actual data
 }vec_t;
 
 typedef mat_t * mat;
 typedef vec_t * vec;
 
 
-f32 randf32();
+nlf randnlf();
 
 //allocates memory;
-mat newMat(u32 width, u32 height);
+mat newMat(nlu width, nlu height);
 
 void destroyMat(mat matrix);
 void displayMat(mat matrix);
 void displayMatCol(mat matrix);
 void zeroMat(mat matrix);
 void randMat(mat matrix);
-
+nlf mat_at(mat m, nlu x,nlu y);
+nlf vec_at(vec v, nlu x);
 //allocates memory
-vec newVec(u32 height);
+vec newVec(nlu height);
 //allocates memory
 vec vcpy(vec src);
 
@@ -44,7 +45,8 @@ void randVec(vec vector);
 void destroyVec(vec vector);
 void displayVec(vec vector);
 void displayVecCol(vec vector);
-void forallVecElements(vec vector , f32 (*fun)(f32));
+void forallVecElements(vec vector , nlf (*fun)(nlf));
+
 
 //math
 
