@@ -65,6 +65,7 @@ void IMGdata(data_t d,nlu w,nlu h){
 int main(){
 	
 	srand(time(NULL));
+	//srand(69);
 	descriptor arch = newDescriptor(4,2,15,5,1);
 	model nn = newModel(arch);
 	model grad = newModel(arch);
@@ -80,25 +81,25 @@ int main(){
 			data.inputs[a][0] = x;
 			data.inputs[a][1] = y;
 			nlf d = distxy(0.5,0.5, x, y);
-			data.outputs[a][0] = ( d < 0.4);
+			data.outputs[a][0] = (d > 0.2 && d < 0.4);
 
 		}
 	}
 	//*/
 
-	nlf rate = 0.1f;
+	nlf rate = 1.0f;
 	system("clear");
 	//sleep(1);
-	for(nlu i = 0; i < 1000000;i++){
+	for(nlu i = 0; i < 100000;i++){
 		backpropagation(grad,nn,data);
 		learn(nn,grad,rate);
-		if(i%100 == 1){
+		if(i%100 == 0){
 			//sleep(1);
 			gotoxy(0,0);
-			IMGvisualization(nn,w,h);
+			IMGvisualization(nn,5*w,5*h);
 			IMGdata(data, w, h);
 			//visualization(nn, data);
-			//displayModel(grad);
+			//displayModel(nn);
 			nlf c = cost(nn,data);
 			printf("%u %f\n",i,c);
 			

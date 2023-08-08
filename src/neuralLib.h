@@ -4,8 +4,11 @@
 #include <stdarg.h>
 #include <stdio.h>
 #include <sys/types.h>
+#include <assert.h>
 
 #define RANDCAP 1
+#define NL_ASSERT assert
+
 
 //neurallib unsigned integer
 typedef unsigned int nlu;
@@ -172,7 +175,7 @@ void zeroMat(mat matrix){//works
 void randMat(mat matrix){//works
     for(nlu i = 0; i < matrix->w;i++){
         for(nlu j = 0; j < matrix->h;j++){
-            matrix->data[i][j] = randnlfcapped(RANDCAP);
+            mat_at(matrix, i, j) = randnlfcapped(RANDCAP);
         }
     }
 }
@@ -224,10 +227,15 @@ void setTXTcol(uc r,uc g,uc b){
     printf("\033[38;2;%u;%u;%um",r,g,b);    //ANSI colour code
 }
 
-
+nlf min(nlf i,nlf j){
+	return ((i <= j)*i) + ((i > j)*j);
+}
+uc sign(nlf i){
+	return (i >= 0);
+} 
 /*
 
-    Will display a matrix with every element between 0 and 1 as shades of grey
+    Will display a matrix with every element between 0 and 1 as shades of red and blue
 
 */
 void displayMatCol(mat matrix){
@@ -238,8 +246,9 @@ void displayMatCol(mat matrix){
     for(nlu y = 0; y < matrix->h;y++){
         printf("| ");
         for(nlu x = 0; x < matrix->w;x++){
-            uc col = 255*matrix->data[x][y];
-            setcol(col,col,col);
+            int pcol = 255*matrix->data[x][y];
+			uc col = abs((int)min(pcol,255));
+			setcol(sign(mat_at(matrix,x, y)) * col,0,(1-sign(mat_at(matrix,x, y))) *col);
             printf("  ");
         }
         resetcol();
@@ -296,14 +305,16 @@ void displayVec(vec vector){
     printf("-+\n");
 }
 
+
 void displayVecCol(vec vector){
     printf("+-");
     printf("  ");
     printf("-+\n");
     for(nlu y = 0; y < vector->h;y++){
         printf("| ");
-        uc col = 255*vector->data[y];
-        setcol(col,col,col);
+        int pcol = 255*vector->data[y];
+		uc col = abs((int)min(pcol,255));
+		setcol(sign(vec_at(vector, y)) * col,0,(1-sign(vec_at(vector, y))) *col);
         printf("  ");
         resetcol();
         printf(" |\n");
@@ -320,32 +331,25 @@ void forallVecElements(vec vector , nlf (*fun)(nlf)){
 }
 
 vec MatrixVectorProduct(mat m, vec v){//correct
-    if(m->w == v->h){
-        vec res = newVec(m->h);
-        for(nlu x = 0;x < m->h;x++){
-            for(nlu y = 0; y < v->h;y++){
-                res->data[x] += m->data[y][x] * v->data[y];
-            }
+    NL_ASSERT(m->w == v->h);
+    vec res = newVec(m->h);
+    for(nlu x = 0;x < m->h;x++){
+        for(nlu y = 0; y < v->h;y++){
+            res->data[x] += mat_at(m, y, x) * vec_at(v, y);
         }
-        return res;
-    }else{
-        fprintf(stderr,"[ERROR] matrix width is not equal to vector length, operation is impossible!\n");
     }
+    return res;
     return NULL;
 }
 
 //allocates memory
 vec Vadd(vec v1,vec v2){
-    if(v1->h == v2->h){//the operation could technicaly be done but since it shouldn't happen it'll be an error here
-        vec res = newVec(v1->h);
-        for(nlu i = 0; i < v1->h;i++){
-            res->data[i] = v1->data[i] + v2->data[i];
-        }
-        return res;
-    }else{
-        fprintf(stderr,"[ERROR] vector 1 length is not equal to vector 2 length, operation is impossible!\n");
+    NL_ASSERT(v1->h == v2->h);//the operation could technicaly be done but since it shouldn't happen it'll be an error here
+    vec res = newVec(v1->h);
+    for(nlu i = 0; i < v1->h;i++){
+        res->data[i] = v1->data[i] + v2->data[i];
     }
-    return NULL;
+    return res;
 }
 
 
@@ -357,7 +361,7 @@ nlf sig(nlf x){
 
 //derivative of sigmoid function
 nlf Dsig(nlf x){
-	return sig(x)*(1.f-sig(x));
+	return x*(1.f-x);//i want to die i was wrong about this for TWO WEEKS
 }
 
 nlf max(nlf a,nlf b){
@@ -391,7 +395,7 @@ descriptor newDescriptor(nlu descSize, ...){//works
     for (nlu i = 0; i < descSize; i++) {
  
         nlu val = va_arg(ptr, nlu);
-		if(val > 10000){printf("[newDescriptor WARNING] %u Layer is huge (%u neurons) are you sure you didn't misuse the function?\n ",i,val);}
+		if(val > 10000){printf("[newDescriptor WARNING] %u Layer is huge (%u neurons) are you sure you didn't missuse the function?\n ",i,val);}
 		arch.desc[i] = val;
     }
  
@@ -468,8 +472,10 @@ void destroyModel(model m){//works
 
 void forward(activations a, model m,vec vinput){//probably works (hard to test)
 	//SHOULD PUT VERIFICATION TO SEE IF ACTIVATION IS CORRECTLY ALLOCATED
+	NL_ASSERT(a->lc-1 == m->lc);
 	vec vprev = vcpy(vinput);
 	for(nlu i = 0;i < m->lc;i++){
+		NL_ASSERT(vprev->h == m->l[i].weights->w);
 		mat m1 = m->l[i].weights;
 		vec va = vprev;
 		vec vb = m->l[i].biases;
@@ -637,7 +643,6 @@ nlf cost(model m,data_t e){
 
 //wip (testing)
 void backpropagation(model g,model nn,data_t e){
-	//SHOULD PUT VERIFICATION TO SEE IF ACTIVATION IS CORRECTLY ALLOCATED
 	if(nn->l[0].weights->w != e.input_length || nn->l[nn->lc-1].biases->h != e.output_length){printf("input/output mismatch between model and dataset\n");}
 	descriptor arch = getDescriptor(nn);
 	activations GA = newActivations(arch);
@@ -671,15 +676,13 @@ void backpropagation(model g,model nn,data_t e){
                 nlf qa = Dsig(a);
 				//printf("Layer = %u DA = %f\n",l,da);
 				g->l[l-1].biases->data[j] += da*qa;
-                for (size_t k = 0; k < GA->layers[l-1].h; ++k) {
+                for (size_t k = 0; k < GA->layers[l-1].h; k++) {
 					//j = height
 					//k = width
                     nlf pa = act->layers[l-1].data[k];
                     nlf w = nn->l[l-1].weights->data[k][j];
 					g->l[l-1].weights->data[k][j] += da*qa*pa;
-					//printf("DA = %f\n",da);
                     GA->layers[l-1].data[k] += da*qa*w;
-					//printf("QA = %f\n",qa);
                 }
 			}
 		}
@@ -687,9 +690,9 @@ void backpropagation(model g,model nn,data_t e){
 	destroyActivations(act);
 
 	//displayModel(g);
-	for (size_t i = 0; i < g->lc-1; ++i) {
-    	for (size_t j = 0; j < g->l[i].weights->h; ++j) {
-	        for (size_t k = 0; k < g->l[i].weights->w; ++k) {
+	for (size_t i = 0; i < g->lc; i++) {
+    	for (size_t j = 0; j < g->l[i].weights->h; j++) {
+	        for (size_t k = 0; k < g->l[i].weights->w; k++) {
 				g->l[i].weights->data[k][j] /= (nlf)n;
             }
 			g->l[i].biases->data[j] /= (nlf)n;
@@ -726,9 +729,8 @@ void finite_diff(model g, model nn, data_t t, nlf eps)
 
 void learn(model nn, model g, nlf rate){
 
-	//if(nn->lc != g->lc)printf("model and gradient dont have the same architecture\n");
-	//if(nn->l[0].biases->h != g->l[0].biases->h)printf("model and gradient dont have the same architecture\n");
-
+	NL_ASSERT(nn->lc == g->lc);
+	NL_ASSERT(nn->l[0].biases->h == g->l[0].biases->h);
 	for(nlu i = 0; i < nn->lc;i++){//for every layer
 		for(nlu j = 0; j < nn->l[i].weights->h;j++){//for every activation
 			for(nlu k = 0; k < nn->l[i].weights->w;k++){//for every weight
@@ -743,8 +745,8 @@ void learn(model nn, model g, nlf rate){
 void displayModel(model nn){//works
 	for(nlu i = 0; i < nn->lc;i++){
 		printf("layer %u:\n",i);
-		displayMat(nn->l[i].weights);
-		displayVec(nn->l[i].biases);
+		displayMatCol(nn->l[i].weights);
+		displayVecCol(nn->l[i].biases);
 	}
 }
 
