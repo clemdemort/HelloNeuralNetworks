@@ -1,3 +1,10 @@
+/*
+					neuralLib.h
+	A standalone header only library for neural networks
+			author : clement bartolone
+
+*/
+
 #ifndef NEURALLIB_H
 #define NEURALLIB_H
 #include <math.h>
@@ -632,7 +639,6 @@ nlf cost(model m,data_t e){
 		forward(resA, m, vinput);				 	//forwarding the model with the input vector
 		vec resc = outputlayer(resA);
 		for(nlu k = 0; k < e.output_length;k++){
-			//printf("resc->data[%u] = %f e.outputs[%u][%u] = %f\n",k,resc->data[k],i,k,e.outputs[i][k]);
 			nlf d = resc->data[k] - e.outputs[i][k]; //calculating the difference			
 			res += d*d;								 //squaring the total (IDK why but 3b1b said so) and adding it up
 		}
@@ -647,7 +653,6 @@ nlf cost(model m,data_t e){
 }
 
 
-//wip (testing)
 void backpropagation(model g,model nn,data_t e){
 	if(nn->l[0].weights->w != e.input_length || nn->l[nn->lc-1].biases->h != e.output_length){printf("input/output mismatch between model and dataset\n");}
 	descriptor arch = getDescriptor(nn);
@@ -672,7 +677,6 @@ void backpropagation(model g,model nn,data_t e){
         vec outpA = outputlayer(GA);
         for (nlu j = 0; j < outp->h; j++) {
 			outpA->data[j] = 2*(outp->data[j] - e.outputs[i][j]);
-			//printf("%f\n",outputlayer(GA)->data[j]);
 		}
 
 		for(nlu l = GA->lc-1; l > 0; l--){//for each layer starting by the end
@@ -695,7 +699,6 @@ void backpropagation(model g,model nn,data_t e){
 	}
 	destroyActivations(act);
 
-	//displayModel(g);
 	for (size_t i = 0; i < g->lc; i++) {
     	for (size_t j = 0; j < g->l[i].weights->h; j++) {
 	        for (size_t k = 0; k < g->l[i].weights->w; k++) {
@@ -764,7 +767,6 @@ void batch_descent(model nn,model g, data_t data,nlu batch_size,nlf rate){
 	nlu EC = data.entry_count;
 	nlu current = 0;
 	while(EC > 0){
-		//printf("EC = %u",EC);
 		data_t batch;
 		batch.entry_count = (EC-batch_size >= batch_size)*batch_size + (EC-batch_size < batch_size)*EC;
 		EC -= batch.entry_count;

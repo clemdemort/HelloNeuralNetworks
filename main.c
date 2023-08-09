@@ -80,15 +80,15 @@ int main(){
 	system("clear");
 	for(nlu i = 0; i <= 30000;i++){
 		stochastic_batch_descent(nn,grad, data,10,rate);
+		nlf c = cost(nn,data);
+		if(c < 0.05) rate = 0.4;
+		if(c > 0.05) rate = 1.0;
 
-		if(i%100 == 0){
+		if(i%1000 == 0){
 			gotoxy(0,0);
-			IMGvisualization(nn,2*w,2*h);
+			IMGvisualization(nn,5*w,5*h);
 			IMGdata(data, w,h);
-			nlf c = cost(nn,data);
 			printf("%u %f\n",i,c);
-			if(c < 0.05) rate = 0.4;
-			if(c > 0.05) rate = 1.0;
 		}
 	}
 
