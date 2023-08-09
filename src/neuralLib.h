@@ -3,6 +3,7 @@
 #include <math.h>
 #include <stdarg.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <sys/types.h>
 #include <assert.h>
 
@@ -34,7 +35,7 @@ typedef vec_t * vec;
 #define vec_at(v, x) (v)->data[x]
 
 nlf randnlf();
-
+nlu randcapped(nlu min,nlu max);
 //allocates memory;
 mat newMat(nlu width, nlu height);
 
@@ -140,7 +141,9 @@ void backpropagation(model g, model nn,data_t e);
 void learn(model nn, model g, nlf rate);
 void HumanVerification(model nn,data_t data);
 void visualization(model nn,data_t data);
-
+void gradient_descent(model nn,model g,data_t data,nlf rate);
+void batch_descent(model nn,model g, data_t data,nlu batch_size,nlf rate);
+void stochastic_batch_descent(model nn,model g, data_t data,nlu batch_size,nlf rate);
 
 
 #endif
@@ -148,6 +151,9 @@ void visualization(model nn,data_t data);
 #ifndef NEURALLIB_IMPLEMENTATION
 #define NEURALLIB_IMPLEMENTATION
 
+nlu randcapped(nlu min,nlu max){
+	return ((rand()) % (max+min))-min;
+}
 nlf randnlf(){//works
 	return (nlf)rand()/(nlf)RAND_MAX;
 }
@@ -748,6 +754,62 @@ void displayModel(model nn){//works
 		displayMatCol(nn->l[i].weights);
 		displayVecCol(nn->l[i].biases);
 	}
+}
+void gradient_descent(model nn,model g,data_t data,nlf rate){
+	backpropagation(g,nn,data);
+	learn(nn,g,rate);
+}
+
+void batch_descent(model nn,model g, data_t data,nlu batch_size,nlf rate){
+	nlu EC = data.entry_count;
+	nlu current = 0;
+	while(EC > 0){
+		//printf("EC = %u",EC);
+		data_t batch;
+		batch.entry_count = (EC-batch_size >= batch_size)*batch_size + (EC-batch_size < batch_size)*EC;
+		EC -= batch.entry_count;
+		batch.input_length = data.input_length;
+		batch.output_length = data.output_length;
+		batch.inputs = &data.inputs[current];
+		batch.outputs = &data.outputs[current];
+
+		backpropagation(g,nn,batch);
+		learn(nn,g,rate);
+
+		current += batch.entry_count;
+	}
+}
+
+nlu * getsortedlist(nlu length){
+	nlu * idx_list = malloc(sizeof(nlu)* length);
+	for(nlu i = 0; i < length;i++)idx_list[i] = i;
+	//shuffle index list
+	for(nlu i = 0; i < length;i++){
+		nlu r = randcapped(0,length);//index to swap with
+		nlu tmp = idx_list[r];
+		idx_list[r] = idx_list[i];
+		idx_list[i] = tmp;
+	}
+	return idx_list;
+}
+
+void stochastic_batch_descent(model nn,model g, data_t data,nlu batch_size,nlf rate){
+	
+	nlu EC = data.entry_count;
+	nlu * idx_list = getsortedlist(EC);
+	//shuffling the data
+	for(nlu i = 0; i < EC;i++){
+		nlf * tmpI = data.inputs[idx_list[i]];
+		nlf * tmpO = data.outputs[idx_list[i]];
+		data.inputs[idx_list[i]] = data.inputs[i];
+		data.inputs[i] = tmpI;
+		data.outputs[idx_list[i]] = data.outputs[i];
+		data.outputs[i] = tmpO;
+	}
+	
+	//doing a regular batch descent
+	batch_descent(nn,g,data,batch_size,rate);
+	free(idx_list);
 }
 
 

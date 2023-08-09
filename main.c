@@ -5,22 +5,6 @@
 #include "src/neuralLib.h"
 
 
-//currently Not working, bug hunting until i find the issue(s) things are looking up though :)
-
-
-void _resetcol(){
-    printf("\033[0m");                      //ANSI colour code
-}
-
-void gotoxy(int x,int y)
-{
-    printf("%c[%d;%df",0x1B,y,x);
-}
-
-void _setcol(uc r,uc g,uc b){
-    printf("\033[38;2;%u;%u;%um",r,g,b);    //ANSI colour code
-}
-
 nlf distxy(nlf x, nlf y , nlf cx, nlf cy){
 	return sqrt(((cx-x)*(cx-x)) + ((cy-y)*(cy-y)) );
 }
@@ -54,7 +38,9 @@ void IMGdata(data_t d,nlu w,nlu h){
 	nlu a = 0;
 	for(nlu i = 0; i < h;i++){
 		for(nlu j = 0; j < w;j++,a++){
-			out->data[j][i] = d.outputs[a][0];
+			nlu x = d.inputs[a][0]*(w-1);
+			nlu y = d.inputs[a][1]*(h-1);
+			out->data[x][y] = d.outputs[a][0];
 
 		}
 	}
@@ -65,13 +51,13 @@ void IMGdata(data_t d,nlu w,nlu h){
 int main(){
 	
 	srand(time(NULL));
-	//srand(69);
-	descriptor arch = newDescriptor(4,2,15,5,1);
+
+	descriptor arch = newDescriptor(4,2,12,7,1);
 	model nn = newModel(arch);
 	model grad = newModel(arch);
 	randModel(nn);
-	nlu w = 10;
-	nlu h = 10;
+	nlu w = 20;
+	nlu h = 20;
 	data_t data = newdataset(w*h, 2,1);
 	nlu a = 0;
 	for(nlu i = 0; i < h;i++){
@@ -81,38 +67,26 @@ int main(){
 			data.inputs[a][0] = x;
 			data.inputs[a][1] = y;
 			nlf d = distxy(0.5,0.5, x, y);
-			data.outputs[a][0] = (d > 0.2 && d < 0.4);
+			data.outputs[a][0] = ((d > 0.3 && d < 0.5) || d < 0.2);
 
 		}
 	}
-	//*/
 
 	nlf rate = 1.0f;
 	system("clear");
-	//sleep(1);
-	for(nlu i = 0; i < 100000;i++){
-		backpropagation(grad,nn,data);
-		learn(nn,grad,rate);
+	for(nlu i = 0; i <= 30000;i++){
+		stochastic_batch_descent(nn,grad, data,10,rate);
+
 		if(i%100 == 0){
-			//sleep(1);
 			gotoxy(0,0);
-			IMGvisualization(nn,5*w,5*h);
+			IMGvisualization(nn,w,h);
 			IMGdata(data, w, h);
-			//visualization(nn, data);
-			//displayModel(nn);
 			nlf c = cost(nn,data);
 			printf("%u %f\n",i,c);
-			
+			if(c < 0.05) rate = 0.4;
+			if(c > 0.05) rate = 1.0;
 		}
 	}
-	activations act = newActivations(arch);
-	vec vinput = malloc(sizeof(vec_t));	  			//creating the input vector
-	vinput->h = data.input_length;						//
-	vinput->data = data.inputs[0];
-	forward(act, nn, vinput);
-	free(vinput);
-	destroyActivations(act);
- 	//displayModel(nn);
 
 	destroydataset(data);
 	destroyModel(nn);
