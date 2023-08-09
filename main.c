@@ -5,6 +5,10 @@
 #include "src/neuralLib.h"
 
 
+void gotoxy(int x,int y)
+{
+    printf("%c[%d;%df",0x1B,y,x);
+}
 nlf distxy(nlf x, nlf y , nlf cx, nlf cy){
 	return sqrt(((cx-x)*(cx-x)) + ((cy-y)*(cy-y)) );
 }
@@ -79,8 +83,8 @@ int main(){
 
 		if(i%100 == 0){
 			gotoxy(0,0);
-			IMGvisualization(nn,w,h);
-			IMGdata(data, w, h);
+			IMGvisualization(nn,2*w,2*h);
+			IMGdata(data, w,h);
 			nlf c = cost(nn,data);
 			printf("%u %f\n",i,c);
 			if(c < 0.05) rate = 0.4;
