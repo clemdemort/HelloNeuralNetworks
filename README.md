@@ -9,6 +9,7 @@ I hope to be able to show this off to my peers by the end of the summer.
 * create a text user interface to visualize data ✅
 * create a neural network ✅
 * create a system to train the network ✅
+* create a rate optimizer to further enhance learning
 * train the neural network on data to recognize drawn numbers
 * create an interface to interact with the neural network
 
