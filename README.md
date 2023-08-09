@@ -8,7 +8,7 @@ I hope to be able to show this off to my peers by the end of the summer.
 * create some sort of csv loader
 * create a text user interface to visualize data ✅
 * create a neural network ✅
-* create a system to train the network ✅ (can be trained, backpropagation would make it better)
+* create a system to train the network ✅
 * train the neural network on data to recognize drawn numbers
 * create an interface to interact with the neural network
 
