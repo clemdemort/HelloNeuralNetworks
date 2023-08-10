@@ -3,6 +3,7 @@
 #include <time.h>
 #include <math.h>
 #include "src/neuralLib.h"
+#include "src/ui.h"
 
 
 void gotoxy(int x,int y)
@@ -54,6 +55,8 @@ void IMGdata(data_t d,nlu w,nlu h){
 
 int main(){
 	
+	init_ui_thread();
+
 	srand(time(NULL));
 
 	descriptor arch = newDescriptor(4,2,12,7,1);
@@ -86,7 +89,7 @@ int main(){
 
 		if(i%1000 == 0){
 			gotoxy(0,0);
-			IMGvisualization(nn,5*w,5*h);
+			IMGvisualization(nn,2*w,2*h);
 			IMGdata(data, w,h);
 			printf("%u %f\n",i,c);
 		}
@@ -96,5 +99,8 @@ int main(){
 	destroyModel(nn);
 	destroyModel(grad);
 	destroyDesc(arch);
+
+	join_ui_thread();
+
   	return EXIT_SUCCESS;
 }
