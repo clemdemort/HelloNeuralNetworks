@@ -1,10 +1,10 @@
 #name of the executable
 NAME = neuralnetwork
 #files necessary for compilation
-FILES = main.c src/ui.c
+FILES = main.c
 #compiler flags
-RFLAGS = -Ofast -std=c99 -lm -lpthread -lSDL2				#release
-DFLAGS = -O1 -std=c99 -Wall -Wextra -g -lm -lpthread -lSDL2	#debug
+RFLAGS = -Ofast -std=c11 -lm -lpthread -lSDL2				#release
+DFLAGS = -O1 -std=c11 -Wall -Wextra -g -lm -lpthread -lSDL2	#debug
 
 #by default build in debug
 make :

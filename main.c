@@ -1,9 +1,9 @@
+#include "src/media.h"
+#include "src/neuralLib.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
 #include <math.h>
-#include "src/neuralLib.h"
-#include "src/ui.h"
 
 
 void gotoxy(int x,int y)
@@ -53,9 +53,21 @@ void IMGdata(data_t d,nlu w,nlu h){
 	destroyMat(out);
 }
 
+
+void draw(MEDIA_H_CONTEXT * context){
+    char * title = malloc (30);
+    sprintf(title, "FPS : %.1f",1.0/context->elapsedTime);
+    ChangeTitle(context,title);
+    free(title);
+    RenderClear(context,colour(20,20,20,0));
+}
+
+
 int main(){
 	
-	init_ui_thread();
+	SDL_Init(SDL_INIT_EVERYTHING);
+
+    MEDIA_H_CONTEXT context = newcontext("FPS : ",1000, 1000 ,500 ,500, SDL_WINDOW_RESIZABLE);
 
 	srand(time(NULL));
 
@@ -80,27 +92,26 @@ int main(){
 	}
 
 	nlf rate = 1.0f;
-	system("clear");
-	for(nlu i = 0; i <= 30000;i++){
+	//system("clear");
+	nlf c = cost(nn,data);
+	nlu i = 0;
+	while(context.RUNNING){
 		stochastic_batch_descent(nn,grad, data,10,rate);
-		nlf c = cost(nn,data);
 		if(c < 0.05) rate = 0.4;
 		if(c > 0.05) rate = 1.0;
 
-		if(i%1000 == 0){
-			gotoxy(0,0);
-			IMGvisualization(nn,2*w,2*h);
-			IMGdata(data, w,h);
-			printf("%u %f\n",i,c);
+		if(i%100 == 0){
+	        update_MEDIA_H_CONTEXT(&context, draw);
 		}
+		i++;
 	}
 
 	destroydataset(data);
 	destroyModel(nn);
 	destroyModel(grad);
 	destroyDesc(arch);
-
-	join_ui_thread();
+	destroycontext(context);
+    SDL_Quit();
 
   	return EXIT_SUCCESS;
 }
