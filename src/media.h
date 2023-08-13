@@ -7,7 +7,7 @@
 
 #ifndef MEDIA_H
 #define MEDIA_H
-#define _POSIX_C_SOURCE 199309L
+#define _POSIX_C_SOURCE 199309L//for getting CLOCK_REALTIME macro
 #include <SDL2/SDL_pixels.h>
 #include <SDL2/SDL_render.h>
 #include <bits/types/clock_t.h>
@@ -51,6 +51,34 @@ typedef struct rgba {
 	uc A;
 }rgba;
 
+//simple function to make declaring colours faster
+rgba colour(uc R,uc G,uc B,uc A);
+u32 colToPixel(rgba col);
+
+MEDIA_H_CONTEXT newcontext(char * title, int xpos, int ypos, int width, int height, int flags);
+void destroycontext(MEDIA_H_CONTEXT context);
+void handle_events(MEDIA_H_CONTEXT * context);
+void update_MEDIA_H_CONTEXT(MEDIA_H_CONTEXT * context,void (*update_function)(MEDIA_H_CONTEXT*));
+//will return 1 if key is currently being pressed
+int GetKey(MEDIA_H_CONTEXT * context,int scancode);
+void GetMouseState(int * left,int * right);
+void GetMousePos(int * X,int * Y);
+void GetWindowSize(MEDIA_H_CONTEXT * context,int * width,int * height);
+
+void ChangeTitle(MEDIA_H_CONTEXT * context,char * title);
+void RenderClear(MEDIA_H_CONTEXT * context,rgba col);
+void RenderPixel(MEDIA_H_CONTEXT * context,rgba col, int x, int y);
+void setPixelValue(MEDIA_H_CONTEXT * context,u32 col, int x, int y);
+void RenderRectangle(MEDIA_H_CONTEXT * context,rgba col,long int x, long int y ,unsigned long int sx,unsigned long int sy);
+void RenderCircleOutline(MEDIA_H_CONTEXT * context,rgba col, int x, int y, int r);
+void RenderCircle(MEDIA_H_CONTEXT * context,rgba col, int x, int y, int r);
+
+
+
+
+#endif
+#ifndef MEDIA_H_IMPLEMENTATION
+#define MEDIA_H_IMPLEMENTATION
 //*******************//
 // Utility Functions //
 //*******************//

@@ -5,61 +5,63 @@
 #include <time.h>
 #include <math.h>
 
+model mdl;//model
 
-void gotoxy(int x,int y)
-{
-    printf("%c[%d;%df",0x1B,y,x);
-}
 nlf distxy(nlf x, nlf y , nlf cx, nlf cy){
 	return sqrt(((cx-x)*(cx-x)) + ((cy-y)*(cy-y)) );
 }
 
-void IMGvisualization(model nn,nlu w,nlu h){
-	mat out = newMat(w,h);
+void draw_out(MEDIA_H_CONTEXT * context,model nn){
 	vec vin = newVec(2);
 	descriptor D = getDescriptor(nn);
 	activations act = newActivations(D);
 	destroyDesc(D);
-	for(nlu i = 0; i < h;i++){
-		for(nlu j = 0; j < w;j++){
-			nlf x = j/(nlf)(w-1);
-			nlf y = i/(nlf)(h-1);
-			vin->data[0] = x;
-			vin->data[1] = y;
+	nlu w = context->scrW;
+	nlu h = context->scrH;
+	nlu a = 0;
+	for(nlu y = 0; y < h;y++)
+		for(nlu x = 0; x < w;x++,a++){
+			nlf xf = x/(nlf)(w-1);
+			nlf yf = y/(nlf)(h-1);
+			vin->data[0] = xf;
+			vin->data[1] = yf;
 			forward(act,nn,vin);
 			vec outp = outputlayer(act);
-			out->data[j][i] = outp->data[0];
-
+			uc c = outp->data[0] * 255;
+			rgba col = colour(c, c,c,c);
+			context->pixels[a] = colToPixel(col);
 		}
-	}
+
 	destroyActivations(act);
 	destroyVec(vin);
-	displayMatCol(out);
-	destroyMat(out);
 }
 
-void IMGdata(data_t d,nlu w,nlu h){
-	mat out = newMat(w,h);
-	nlu a = 0;
-	for(nlu i = 0; i < h;i++){
-		for(nlu j = 0; j < w;j++,a++){
-			nlu x = d.inputs[a][0]*(w-1);
-			nlu y = d.inputs[a][1]*(h-1);
-			out->data[x][y] = d.outputs[a][0];
-
-		}
-	}
-	displayMatCol(out);
-	destroyMat(out);
+void manage_keys(MEDIA_H_CONTEXT * context){
+	if(GetKey(context, SDL_SCANCODE_UP))
+    {
+        context->scale -= 1;
+		if(context->scale <= 0)context->scale = 1;
+    }
+	if(GetKey(context, SDL_SCANCODE_DOWN))
+    {
+        context->scale += 1;
+		if(context->scale > 30)context->scale = 30;
+    }
+	if(GetKey(context, SDL_SCANCODE_R))
+    {
+        randModel(mdl);
+    }
 }
-
 
 void draw(MEDIA_H_CONTEXT * context){
     char * title = malloc (30);
     sprintf(title, "FPS : %.1f",1.0/context->elapsedTime);
     ChangeTitle(context,title);
     free(title);
-    RenderClear(context,colour(20,20,20,0));
+
+	manage_keys(context);
+    //RenderClear(context,colour(20,20,20,0));
+	draw_out(context,mdl);
 }
 
 
@@ -68,13 +70,13 @@ int main(){
 	SDL_Init(SDL_INIT_EVERYTHING);
 
     MEDIA_H_CONTEXT context = newcontext("FPS : ",1000, 1000 ,500 ,500, SDL_WINDOW_RESIZABLE);
-
+	context.scale = 4;
 	srand(time(NULL));
 
 	descriptor arch = newDescriptor(4,2,12,7,1);
-	model nn = newModel(arch);
+	mdl = newModel(arch);
 	model grad = newModel(arch);
-	randModel(nn);
+	randModel(mdl);
 	nlu w = 20;
 	nlu h = 20;
 	data_t data = newdataset(w*h, 2,1);
@@ -92,11 +94,10 @@ int main(){
 	}
 
 	nlf rate = 1.0f;
-	//system("clear");
-	nlf c = cost(nn,data);
+	nlf c = cost(mdl,data);
 	nlu i = 0;
 	while(context.RUNNING){
-		stochastic_batch_descent(nn,grad, data,10,rate);
+		stochastic_batch_descent(mdl,grad, data,10,rate);
 		if(c < 0.05) rate = 0.4;
 		if(c > 0.05) rate = 1.0;
 
@@ -107,7 +108,7 @@ int main(){
 	}
 
 	destroydataset(data);
-	destroyModel(nn);
+	destroyModel(mdl);
 	destroyModel(grad);
 	destroyDesc(arch);
 	destroycontext(context);
