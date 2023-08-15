@@ -5,29 +5,42 @@ I hope to be able to show this off to my peers by the end of the summer.
 
 # 📜 Objectives :
 * create a matrix operations header ✅
-* create some sort of csv loader
+* create some sort of csv/png loader ✅
 * create a text user interface to visualize data ✅
 * create a neural network ✅
 * create a system to train the network ✅
-* create a rate optimizer to further enhance learning
+* create a rate optimizer to further enhance learning (might do)
 * train the neural network on data to recognize drawn numbers
-* create an interface to interact with the neural network
+* create an interface to interact with the neural network (WIP)
+
+# 📸 UI :
+The UI is a simple resizable window with a FPS counter.
+
+The image output of the neural network is rendered inside the window like so :
+
+![image](https://github.com/clemdemort/HelloNeuralNetworks/assets/62178977/f20f4e5e-fafd-4cf4-8599-4fb2cfc72b97)
+
+# 🎮 Controls :
+
+There are currently a few keybinds you can use 
+
+* SPACE : pauses/unpauses the learning by the default the program is paused
+* R : randomizes the neural network (starts learning all over again)
+* UP : increases output quality
+* Down : decreases output quality
+
+# 🖥️ Launch options :
+
+you can add a .png file as an option to change the image being used.
 
 # 🐧 Compiling on Linux :
 
-## ⚠️DISCLAIMER⚠️ : 
-
-the project is currently under development, therefore, compilation might change, 
-I'm leaving the steps that will be needed to compile the project once it is completed,
-though they arent exactly the same today (SDL2 currently is not needed)
-
-## END OF DISCLAIMER
-
-Compiling on Linux is trivial, on most distributions you should only need to install the SDL2 library
+Compiling on Linux is trivial, on most distributions you should only need to install the SDL2 and the libpng libraries
 ```
 Fedora : "SDL2-devel"
 Arch   : "sdl2"
-
+Fedora : "libpng"
+Arch   : "libpng"
 ```
 then simply go to the project directory and type ```make release``` in your command prompt.
 An executable should have been created in the **./build/release** directory if all went well.
