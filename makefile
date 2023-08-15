@@ -1,10 +1,11 @@
 #name of the executable
 NAME = neuralnetwork
 #files necessary for compilation
-FILES = main.c
+FILES = main.c src/pngloader.c
 #compiler flags
-RFLAGS = -Ofast -std=c11 -lm -lpthread -lSDL2				#release
-DFLAGS = -O1 -std=c11 -Wall -Wextra -g -lm -lpthread -lSDL2	#debug
+LFLAGS = -lm -lpng -lpthread -lSDL2
+RFLAGS = -Ofast -std=c11 $(LFLAGS)					#release
+DFLAGS = -O1 -std=c11 -Wall -Wextra -g $(LFLAGS)	#debug
 
 #by default build in debug
 make :

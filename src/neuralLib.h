@@ -21,7 +21,7 @@
 //neurallib unsigned integer
 typedef unsigned int nlu;
 //neurallib float
-typedef float nlf;
+typedef double nlf;
 typedef unsigned char uc;
 
 //a matrix is always accessed like so : mat[x][y]

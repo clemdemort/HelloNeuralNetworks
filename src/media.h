@@ -139,14 +139,14 @@ void update_MEDIA_H_CONTEXT(MEDIA_H_CONTEXT * context,void (*update_function)(ME
         context->elapsedTime = (double)t/1000000.0;
     }
 
-    static u32 w,h;
+    static u32 w,h,s;
     u32 w2,h2;
     GetWindowSize(context,&w2, &h2);
-    if(w != w2 || h != h2){//resize
+    if(w != w2 || h != h2 || context->scale != s){//resize
         free(context->pixels);
         context->pixels = calloc(w2 * h2, 4);
     }
-
+    s = context->scale;
     h = h2;
     w = w2;
     h2 = h/context->scale;
