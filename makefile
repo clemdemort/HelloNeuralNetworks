@@ -15,4 +15,6 @@ release :
 	mkdir -p ./build/release/
 	gcc $(FILES) $(RFLAGS) -o ./build/release/$(NAME)
 
-
+web :
+	mkdir -p ./build/web/
+	emcc $(FILES) -O3 -o ./build/release/index.html

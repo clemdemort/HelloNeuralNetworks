@@ -104,7 +104,7 @@ int main(int argc,char ** argv){
 	context.scale = 10;
 	srand(time(NULL));
 
-	descriptor arch = newDescriptor(5,2,20,10,10,3);
+	descriptor arch = newDescriptor(5,2,50,20,50,3);
 	mdl = newModel(arch);
 	model grad = newModel(arch);
 	randModel(mdl);
@@ -129,14 +129,14 @@ int main(int argc,char ** argv){
 		}
 	}
 
-	nlf rate = 1.0f;
+	nlf rate = 0.3f;
 	nlf c = cost(mdl,data);
 	nlu i = 0;
 	while(context.RUNNING){
 		if(!PAUSE)stochastic_batch_descent(mdl,grad, data,test->w/2,rate);
 		
 		if(!PAUSE){
-			if(i%100 == 0){
+			if(i%10 == 0){
 	        	update_MEDIA_H_CONTEXT(&context, draw);
 			}
 		}else{

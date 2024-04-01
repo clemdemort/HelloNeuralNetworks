@@ -13,6 +13,8 @@
 #include <stdlib.h>
 #include <sys/types.h>
 #include <assert.h>
+//requires SIMD support
+#include <x86intrin.h>
 
 #define RANDCAP 1
 #define NL_ASSERT assert
@@ -21,7 +23,7 @@
 //neurallib unsigned integer
 typedef unsigned int nlu;
 //neurallib float
-typedef double nlf;
+typedef float nlf;
 typedef unsigned char uc;
 
 //a matrix is always accessed like so : mat[x][y]
@@ -72,6 +74,14 @@ vec MatrixVectorProduct(mat m, vec v);
 //allocates memory
 vec Vadd(vec v1,vec v2);
 
+
+//for SIMD optimizations
+typedef union {
+    __m128 m128_vec;
+    float m128_f32 [4] ;
+} xmm_t;
+
+
 //neural network implementation
 
 typedef struct layer_s{
@@ -95,6 +105,7 @@ typedef struct activations_s{
 }activations_t;
 
 typedef activations_t * activations;
+
 
 
 typedef struct data_s{
@@ -343,17 +354,78 @@ void forallVecElements(vec vector , nlf (*fun)(nlf)){
     }
 }
 
-vec MatrixVectorProduct(mat m, vec v){//correct
+
+vec MatrixVectorProduct_old(mat m, vec v){//correct
     NL_ASSERT(m->w == v->h);
     vec res = newVec(m->h);
     for(nlu x = 0;x < m->h;x++){
-        for(nlu y = 0; y < v->h;y++){
+		for(nlu y = 0; y < v->h;y++){  
             res->data[x] += mat_at(m, y, x) * vec_at(v, y);
         }
     }
     return res;
-    return NULL;
 }
+vec MatrixVectorProduct(mat m, vec v){//super salar version
+    NL_ASSERT(m->w == v->h);
+    vec res = newVec(m->h);
+	
+	nlu optE = v->h%4;			//values after that optimization
+	nlu optS = v->h-optE;		//maximum value we can SIMD
+	//printf("v->h = %u optS = %u optE = %u\n",v->h,optS,optE);
+    for(nlu x = 0;x < m->h;x++){
+		nlf acc = 0.f;
+		for(nlu y = 0; y != optS;y += 4){  
+			nlf acc1 = mat_at(m, (y+0), x) * vec_at(v, (y+0));
+			nlf acc2 = mat_at(m, (y+1), x) * vec_at(v, (y+1));
+			nlf acc3 = mat_at(m, (y+2), x) * vec_at(v, (y+2));
+			nlf acc4 = mat_at(m, (y+3), x) * vec_at(v, (y+3));
+			acc = acc + acc1 + acc2 + acc3 + acc4;
+        }
+		res->data[x] = acc;
+		for(nlu y = optS; y < v->h;y++){  
+            res->data[x] += mat_at(m, y, x) * vec_at(v, y);
+        }
+    }
+    return res;
+}
+
+//not working as of yet
+vec MatrixVectorProduct_SSE(mat m, vec v){
+    NL_ASSERT(m->w == v->h);
+    vec res = newVec(m->h);
+	
+	nlu optE = v->h%4;			//values after that optimization
+	nlu optS = v->h-optE;		//maximum value we can SIMD
+	printf("v->h = %u optS = %u optE = %u\n",v->h,optS,optE);
+    for(nlu x = 0;x < m->h;x++){
+		xmm_t acc;
+    	__m128 AA , BB , AB;
+    	acc.m128_vec = _mm_setzero_ps();
+		const float * ptr = m->data[x];
+    	for(nlu y = 0; y != optS; y += 4){
+			//float t1 = *(ptr + y);
+			//float t2 = *(ptr + y+1);
+			//float t3 = *(ptr + y+2);
+			//float t4 = *(ptr + y+3);
+			//printf("t1 : %f t2 : %f t3 : %f t4 : %f\n",t1,t2,t3,t4);
+			//printf("t1 : %p t2 : %p t3 : %p t4 : %p\n",(ptr + y+0),(ptr + y+1),(ptr + y+2),(ptr + y+3));
+        	AA = _mm_load_ps(&m->data[x][y]);
+        	BB = _mm_load_ps(&v->data[y]);
+        	AB = _mm_mul_ps(AA,BB);
+        	acc.m128_vec = _mm_add_ps(acc.m128_vec,AB);
+    	}
+		res->data[x] = acc.m128_f32[0] + acc.m128_f32[1] +acc.m128_f32[2] +acc.m128_f32[3];
+
+		for(nlu y = optS; y < v->h;y++){  
+            res->data[x] += mat_at(m, y, x) * vec_at(v, y);
+        }
+    }
+    return res;
+}
+
+//vec MatrixVectorProduct(mat m, vec v){
+//	return MatrixVectorProduct_old(m,v);
+//}
 
 //allocates memory
 vec Vadd(vec v1,vec v2){
